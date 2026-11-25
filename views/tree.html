@@ -19,10 +19,11 @@
     </form>
   </details>
   <details class="pop">
-    <summary>Gérer « {{ section_title }} »</summary>
+    <summary title="Réglages de « {{ section_title }} »" aria-label="Réglages de la section {{ section_title }}">⚙</summary>
     <div class="pop-body">
       <form method="post" action="/admin/sections/{{ section }}" class="stack">
         {{ csrf | raw }}
+        <input type="hidden" name="return" value="{{ section_url }}">
         <input type="hidden" name="locale" value="{{ locale }}">
         <label>Titre <input name="title" value="{{ section_title }}" required></label>
         <button class="btn primary" type="submit">Renommer</button>

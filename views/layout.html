@@ -20,6 +20,7 @@
       <a href="/admin/import" {% if nav_import %}aria-current="page"{% end %}>Import</a>
       <a href="/admin/releases" {% if nav_releases %}aria-current="page"{% end %}>Versions</a>
       <a href="/admin/audit" {% if nav_audit %}aria-current="page"{% end %}>Journal</a>
+      {% if is_admin %}<a href="/admin/packages" {% if nav_packages %}aria-current="page"{% end %}>Paquets</a>{% end %}
       {% if is_admin %}<a href="/admin/accounts" {% if nav_accounts %}aria-current="page"{% end %}>Comptes</a>{% end %}
     </nav>
     <a class="muted" href="/fr/docs" target="_blank" rel="noopener">Voir le site ↗</a>

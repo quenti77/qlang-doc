@@ -143,6 +143,28 @@ fun all_migrations() -> array<migrate.Migration>
             ],
             down: ["DROP TABLE package_versions", "DROP TABLE packages"],
         },
+        migrate.Migration {
+            id: "006_registry_moderation",
+            up: [
+                "ALTER TABLE packages ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'listed'",
+                "ALTER TABLE packages ADD COLUMN latest_version VARCHAR(50) NOT NULL DEFAULT ''",
+                "ALTER TABLE packages ADD COLUMN sync_requested BOOLEAN NOT NULL DEFAULT false",
+                "ALTER TABLE packages ADD COLUMN sync_error VARCHAR(500) NOT NULL DEFAULT ''",
+                "ALTER TABLE packages ADD COLUMN created_at BIGINT NOT NULL DEFAULT 0",
+                "ALTER TABLE package_versions ADD COLUMN qlang_req VARCHAR(50) NOT NULL DEFAULT ''",
+                "ALTER TABLE package_versions ADD COLUMN first_seen BIGINT NOT NULL DEFAULT 0",
+                "CREATE INDEX packages_status ON packages (status)",
+            ],
+            down: [
+                "ALTER TABLE package_versions DROP COLUMN first_seen",
+                "ALTER TABLE package_versions DROP COLUMN qlang_req",
+                "ALTER TABLE packages DROP COLUMN created_at",
+                "ALTER TABLE packages DROP COLUMN sync_error",
+                "ALTER TABLE packages DROP COLUMN sync_requested",
+                "ALTER TABLE packages DROP COLUMN latest_version",
+                "ALTER TABLE packages DROP COLUMN status",
+            ],
+        },
     ]
 end
 

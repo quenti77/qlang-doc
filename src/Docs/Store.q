@@ -398,4 +398,4 @@ impl Store
     end
 end
 
-export Store
+export Store, Row, num, text, opt, col_int, col_opt, col_text

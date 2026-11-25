@@ -1,0 +1,28 @@
+<main class="wrap narrow-wide">
+  <div class="head">
+    <h1>Paquets</h1>
+    {% if can_submit %}<a class="btn small" href="/packages/submit">Proposer un paquet</a>{% end %}
+  </div>
+  <p class="muted">Les paquets sont des dépôts git avec un <code>qlang.toml</code> et une étiquette <code>vX.Y.Z</code> par version. Le registre dit où ils vivent ; <code>qlang add nom</code> les récupère par git et les fige dans <code>qlang.lock</code>.</p>
+  <form action="/packages" method="get" class="row"><input class="grow" type="search" name="q" value="{{ query }}" placeholder="Chercher un paquet…"><button class="btn primary" type="submit">Chercher</button></form>
+  {% if keywords %}
+  <p class="chips">{% for k in keywords %}<a class="chip" href="{{ k.url }}" {% if k.active %}aria-current="true"{% end %}>{{ k.name }}</a>{% end %}</p>
+  {% end %}
+  {% if has_rows %}
+  <ul class="pkgs">
+    {% for p in rows %}
+    <li>
+      <a class="pkg-name" href="{{ p.url }}">{{ p.name }}</a>
+      {% if p.has_latest %}<span class="muted">{{ p.latest }}</span>{% end %}
+      {% if p.has_license %}<span class="badge">{{ p.license }}</span>{% end %}
+      <p>{{ p.description }}</p>
+    </li>
+    {% end %}
+  </ul>
+  {% else %}
+  <p class="muted">Aucun paquet ne correspond.</p>
+  {% end %}
+  <h2>Utiliser ce registre</h2>
+  <p>Par défaut, qlang lit l'index du dépôt de qlang. Pour lire celui-ci :</p>
+  <pre class="install-line">export QLANG_INDEX_URL={{ index_url }}</pre>
+</main>

@@ -26,7 +26,7 @@ test-db: db
 	@docker compose exec -T db psql -U qlang_doc -d qlang_doc -tc "SELECT 1 FROM pg_database WHERE datname = 'qlang_doc_test'" | grep -q 1 || docker compose exec -T db createdb -U qlang_doc qlang_doc_test
 
 test: test-db
-	qlang test
+	qlang test --allow-process
 
 down:
 	docker compose down

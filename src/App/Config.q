@@ -5,6 +5,9 @@ struct Config
     public secure_cookies: bool
     public submissions_open: bool
     public views_dir: string
+    public git_hosts: array<string>
+    public hook_secret: string
+    public base_url: string
 end
 
 impl Config
@@ -24,6 +27,9 @@ impl Config
             secure_cookies: env.get("DOC_SECURE_COOKIES") == "1",
             submissions_open: env.get("DOC_SUBMISSIONS") == "open",
             views_dir: env.get("DOC_VIEWS_DIR") ?? "views",
+            git_hosts: (env.get("DOC_GIT_HOSTS") ?? "github.com,gitlab.com,codeberg.org").split(",").map(fun(h: string) -> string h.trim().lower() end).filter(fun(h: string) -> bool h != "" end),
+            hook_secret: env.get("DOC_HOOK_SECRET") ?? "",
+            base_url: (env.get("DOC_BASE_URL") ?? "http://127.0.0.1:8082").trim(),
         })
     end
 end

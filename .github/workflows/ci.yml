@@ -30,4 +30,4 @@ jobs:
         run: curl -fsSL https://raw.githubusercontent.com/quenti77/qlang/main/install.sh | sh
       - run: ~/.local/bin/qlang install
       - run: ~/.local/bin/qlang fmt --check
-      - run: ~/.local/bin/qlang test
+      - run: ~/.local/bin/qlang test --allow-process

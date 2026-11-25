@@ -4,12 +4,13 @@ import Docs from "../Docs/Docs.q"
 import Store from "../Docs/Store.q"
 import fresh_db from "../Docs/TestSupport.q"
 import Config from "./Config.q"
+import Registry, Options from "../Registry/Registry.q"
 import build from "./Web.q"
 
 let PASSWORD = "a long enough password"
 
-fun config() -> Config
-    Config { database_url: "", session_secret: "test-session-secret-of-at-least-32-chars", secure_cookies: false, submissions_open: false, views_dir: "views" }
+fun config(open: bool) -> Config
+    Config { database_url: "", session_secret: "test-session-secret-of-at-least-32-chars", secure_cookies: false, submissions_open: open, views_dir: "views", git_hosts: ["github.com"], hook_secret: "hook-secret", base_url: "https://docs.example.org" }
 end
 
 struct Site
@@ -18,11 +19,15 @@ struct Site
 end
 
 fun site() -> Site
+    site_with(false)
+end
+
+fun site_with(open: bool) -> Site
     let db = fresh_db()
     let docs = Docs.new(Store.new(db))
     docs.create_account("boss", PASSWORD, "admin", none)
     docs.create_account("writer", PASSWORD, "editor", none)
-    Site { client: testing.Client.new(build(db, config())), docs: docs }
+    Site { client: testing.Client.new(build(db, config(open))), docs: docs }
 end
 
 --" The CSRF token that a page of the site carries. --"
@@ -128,6 +133,58 @@ fun test_suite()
             s.client.get("/fr/docs/intro").expect_body_contains("version one")
             s.client.get("/fr/search?q=version").expect_status(200).expect_body_contains("Intro")
             s.client.get("/fr/docs/missing").expect_status(404)
+        end)
+    end)
+
+    describe("the registry", fun()
+        it("serves the index in the format of qlang search", fun()
+            let s = site()
+            let registry = Registry.new(s.docs.store, Options { submissions_open: false, hosts: [] })
+            registry.add("json5", "https://github.com/me/json5", none)
+            let body = s.client.get("/packages.json").expect_status(200).body
+            let index = Json.parse(body).unwrap()
+            expect(index.get("json5").unwrap().get("git").unwrap().as_string()).to_be("https://github.com/me/json5")
+            s.client.get("/packages").expect_status(200).expect_body_contains("json5")
+            s.client.get("/packages/json5").expect_status(200).expect_body_contains("qlang add json5")
+            s.client.get("/packages/nope").expect_status(404)
+        end)
+
+        it("takes proposals only when they are open, and holds them for a moderator", fun()
+            let closed = site()
+            post(closed.client, "/admin/login", "/packages/submit", { "name": "json5", "git": "https://github.com/me/json5" }).expect_status(302)
+            expect(closed.client.get("/packages.json").body.contains("json5")).to_be(false)
+            let open = site_with(true)
+            post(open.client, "/packages/submit", "/packages/submit", { "name": "json5", "git": "https://github.com/me/json5" }).expect_status(302)
+            open.client.get("/packages/json5").expect_status(404)
+            expect(open.client.get("/packages.json").body.contains("json5")).to_be(false)
+            post(open.client, "/packages/submit", "/packages/submit", { "name": "evil", "git": "https://localhost/me/x" }).expect_status(302)
+            open.client.get("/packages/submit").expect_status(200).expect_body_contains("Proposer")
+        end)
+
+        it("keeps moderation for administrators", fun()
+            let s = site_with(true)
+            post(s.client, "/packages/submit", "/packages/submit", { "name": "json5", "git": "https://github.com/me/json5" })
+            sign_in(s.client, "writer")
+            s.client.get("/admin/packages").expect_status(403)
+            s.client.forget_cookies()
+            sign_in(s.client, "boss")
+            s.client.get("/admin/packages").expect_status(200).expect_body_contains("json5")
+            post(s.client, "/admin/packages", "/admin/packages/1/approve", {}).expect_status(302)
+            expect(s.docs.store.audit("package", 10, 0)[0].action).to_be("package.approve")
+            s.client.get("/packages/json5").expect_status(200)
+        end)
+
+        it("queues a package when its host calls the webhook with the right signature", fun()
+            let s = site()
+            let registry = Registry.new(s.docs.store, Options { submissions_open: false, hosts: [] })
+            let id = registry.add("json5", "https://github.com/me/json5", none).unwrap()
+            registry.packages.set_sync_requested(id, false)
+            let payload = "\{\"repository\": \{\"html_url\": \"https://github.com/me/json5\"\}\}"
+            s.client.header("X-Hub-Signature-256", "sha256=" + Hash.hmac_sha256("wrong", payload))
+            s.client.post("/hooks/git", payload).expect_status(401)
+            s.client.header("X-Hub-Signature-256", "sha256=" + Hash.hmac_sha256("hook-secret", payload))
+            s.client.post("/hooks/git", payload).expect_status(202).expect_body_contains("true")
+            expect(registry.packages.package(id).unwrap().sync_requested).to_be(true)
         end)
     end)
 

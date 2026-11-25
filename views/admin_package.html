@@ -1,0 +1,51 @@
+<div class="head">
+  <h1>{{ name }} <span class="muted">{{ latest }}</span></h1>
+  <a class="btn small" href="/admin/packages">← Paquets</a>
+</div>
+<p><a href="{{ git_url }}" rel="noopener nofollow" target="_blank">{{ git_url }}</a> · licence {{ license }} · lu : {{ synced }}</p>
+<p>{{ description }}</p>
+{% if has_error %}<div class="flash flash-error">Dernière lecture en erreur : {{ error }}</div>{% end %}
+{% if waiting %}<p class="muted">Une lecture est demandée : le worker la fera à son prochain passage.</p>{% end %}
+{% if is_removed %}<div class="flash flash-error">Retiré de l'index : {{ removed_reason }}</div>{% end %}
+
+<div class="toolbar">
+  {% if is_listed %}<form method="post" action="/admin/packages/{{ id }}/sync">{{ csrf | raw }}<button class="btn" type="submit">Relire le dépôt</button></form>{% end %}
+  {% if is_pending %}<form method="post" action="/admin/packages/{{ id }}/approve">{{ csrf | raw }}<button class="btn primary" type="submit">Accepter</button></form>{% end %}
+  {% if is_removed %}<form method="post" action="/admin/packages/{{ id }}/restore">{{ csrf | raw }}<button class="btn primary" type="submit">Rétablir</button></form>{% end %}
+  <a class="btn" href="/packages/{{ name }}" target="_blank" rel="noopener">Voir la page publique</a>
+  <form method="post" action="/admin/packages/{{ id }}/delete" data-confirm="Supprimer ce paquet du registre ?">{{ csrf | raw }}<button class="btn danger" type="submit">Supprimer</button></form>
+</div>
+
+{% if is_listed %}
+<details class="more">
+  <summary>Retirer de l'index (faille, abandon, nom usurpé…)</summary>
+  <form method="post" action="/admin/packages/{{ id }}/remove" class="stack wide">
+    {{ csrf | raw }}
+    <label>Raison (montrée par <code>qlang add</code>) <input name="reason" required></label>
+    <div><button class="btn danger" type="submit">Retirer</button></div>
+  </form>
+</details>
+{% end %}
+
+<h2>Versions</h2>
+<p class="muted">Une version retirée du choix n'est plus choisie par une nouvelle résolution ; les projets qui l'ont dans leur <code>qlang.lock</code> continuent de marcher.</p>
+<table class="list">
+  <thead><tr><th>Version</th><th>Commit</th><th>qlang</th><th>Vue le</th><th class="right">Action</th></tr></thead>
+  <tbody>
+  {% for v in versions %}
+    <tr>
+      <td>{% if v.yanked %}<s>{{ v.version }}</s> <span class="badge">retirée</span>{% else %}<strong>{{ v.version }}</strong>{% end %}</td>
+      <td><code>{{ v.sha }}</code></td>
+      <td>{{ v.qlang_req }}</td>
+      <td class="muted">{{ v.seen }}</td>
+      <td class="right actions">
+        <form method="post" action="/admin/packages/{{ id }}/yank" data-confirm="Changer le statut de cette version ?">{{ csrf | raw }}<input type="hidden" name="version" value="{{ v.version }}">
+          {% if v.yanked %}<input type="hidden" name="on" value="0"><button class="btn small" type="submit">Rétablir</button>{% else %}<input type="hidden" name="on" value="1"><button class="btn small danger" type="submit">Retirer du choix</button>{% end %}
+        </form>
+      </td>
+    </tr>
+  {% else %}
+    <tr><td class="muted">Aucune version lue pour l'instant.</td></tr>
+  {% end %}
+  </tbody>
+</table>

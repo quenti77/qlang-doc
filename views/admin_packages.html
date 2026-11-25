@@ -1,0 +1,49 @@
+<div class="head">
+  <h1>Paquets</h1>
+  <div class="tabs">
+    <a href="/admin/packages?status=pending" {% if is_pending %}aria-current="page"{% end %}>En attente ({{ pending_count }})</a>
+    <a href="/admin/packages?status=listed" {% if is_listed %}aria-current="page"{% end %}>Dans l'index</a>
+    <a href="/admin/packages?status=removed" {% if is_removed %}aria-current="page"{% end %}>Retirés</a>
+  </div>
+</div>
+<p class="muted">Le site ne lit jamais les dépôts lui-même : le worker (<code>tools/sync-packages.q</code>) le fait, avec ses propres droits. Les propositions publiques sont {% if open %}<strong>ouvertes</strong>{% else %}<strong>fermées</strong>{% end %} (<code>DOC_SUBMISSIONS=open</code> pour les ouvrir).</p>
+
+{% if empty %}
+<p class="muted">Rien ici.</p>
+{% else %}
+<table class="list">
+  <thead><tr><th>Nom</th><th>Dépôt</th><th>État</th><th class="right">Actions</th></tr></thead>
+  <tbody>
+  {% for p in rows %}
+    <tr>
+      <td><a href="/admin/packages/{{ p.id }}"><strong>{{ p.name }}</strong></a> <span class="muted">{{ p.latest }}</span><br><span class="muted">{{ p.description }}</span></td>
+      <td><a href="{{ p.git_url }}" rel="noopener nofollow" target="_blank">{{ p.git_url }}</a></td>
+      <td>
+        {% if p.has_error %}<span class="badge err" title="{{ p.error }}">erreur</span>{% end %}
+        {% if p.waiting %}<span class="badge">lecture demandée</span>{% end %}
+        {% if is_removed %}<span class="muted">{{ p.removed_reason }}</span>{% end %}
+        {% if is_listed %}<span class="muted">lu : {{ p.synced }}</span>{% end %}
+      </td>
+      <td class="right actions">
+        {% if is_pending %}
+        <form method="post" action="/admin/packages/{{ p.id }}/approve">{{ csrf | raw }}<button class="btn small primary" type="submit">Accepter</button></form>
+        <form method="post" action="/admin/packages/{{ p.id }}/reject" data-confirm="Refuser et oublier cette proposition ?">{{ csrf | raw }}<button class="btn small danger" type="submit">Refuser</button></form>
+        {% else %}
+        <a class="btn small" href="/admin/packages/{{ p.id }}">Gérer</a>
+        {% end %}
+      </td>
+    </tr>
+  {% end %}
+  </tbody>
+</table>
+{% end %}
+
+<h2>Ajouter un paquet</h2>
+<form method="post" action="/admin/packages" class="stack wide">
+  {{ csrf | raw }}
+  <div class="row">
+    <label class="grow">Nom <input name="name" pattern="[a-z0-9_-]+" required placeholder="json5"></label>
+    <label class="grow">Adresse du dépôt (https) <input name="git" type="url" required placeholder="https://github.com/moi/json5"></label>
+  </div>
+  <div><button class="btn primary" type="submit">Ajouter à l'index</button></div>
+</form>

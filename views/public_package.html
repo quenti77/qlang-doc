@@ -1,0 +1,33 @@
+<main class="wrap pkg">
+  <div class="pkg-head">
+    <h1>{{ name }} {% if has_latest %}<span class="muted ver">{{ latest }}</span>{% end %}</h1>
+    {% if has_description %}<p class="lead">{{ description }}</p>{% end %}
+  </div>
+  {% if removed %}<div class="flash flash-error">Ce paquet a été retiré du registre{% if removed_reason %} : {{ removed_reason }}{% end %}. <code>qlang add</code> le refuse ; les projets qui l'ont déjà dans leur <code>qlang.lock</code> continuent de fonctionner.</div>{% end %}
+  <div class="pkg-layout">
+    <div>
+      {% if has_readme %}<div class="prose">{{ readme_html | raw }}</div>{% else %}<p class="muted">Ce paquet n'a pas (encore) de README lisible.</p>{% end %}
+    </div>
+    <aside class="pkg-side">
+      <h2>Installer</h2>
+      <pre class="install-line">{{ install }}</pre>
+      <p class="muted">ou dans <code>qlang.toml</code> :</p>
+      <pre class="install-line">{{ pinned }}</pre>
+      <h2>Détails</h2>
+      <dl>
+        {% if has_license %}<dt>Licence</dt><dd>{{ license }}</dd>{% end %}
+        <dt>Dépôt</dt><dd><a href="{{ git_url }}" rel="noopener nofollow">{{ git_url }}</a></dd>
+        {% if synced %}<dt>Lu le</dt><dd>{{ synced }}</dd>{% end %}
+      </dl>
+      {% if keywords %}<p class="chips">{% for k in keywords %}<a class="chip" href="/packages?k={{ k }}">{{ k }}</a>{% end %}</p>{% end %}
+      {% if has_versions %}
+      <h2>Versions</h2>
+      <ul class="versions-list">
+        {% for v in versions %}
+        <li>{% if v.yanked %}<s>{{ v.version }}</s> <span class="badge">retirée</span>{% else %}<strong>{{ v.version }}</strong>{% end %}{% if v.has_req %} <span class="muted">qlang {{ v.qlang_req }}</span>{% end %}</li>
+        {% end %}
+      </ul>
+      {% end %}
+    </aside>
+  </div>
+</main>

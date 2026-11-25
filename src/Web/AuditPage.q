@@ -25,6 +25,7 @@ struct AuditData
     public kind_folder: bool
     public kind_release: bool
     public kind_account: bool
+    public kind_package: bool
     public page: int
     public pages: int
     public prev: int
@@ -52,6 +53,9 @@ fun link_of(e: AuditEntry, data: Json) -> string
             return "/admin/pages/{id}/diff?from={older}&to={newer}"
         end
         return "/admin/pages/{id}"
+    end
+    if e.entity_type == "package" and e.action != "package.delete" and e.action != "package.reject" then
+        return "/admin/packages/{id}"
     end
     if e.entity_type == "release" and e.action != "release.delete" then
         return "/admin/releases/{id}"
@@ -81,7 +85,7 @@ end
 impl AuditPage
     #[web.Get("/audit")]
     public fun show(self, req: Request, #[web.Query] type: string?, #[web.Query] page: string?) -> Response
-        let kind = if ["page", "folder", "release", "account"].contains(type ?? "") then type ?? "" else "" end
+        let kind = if ["page", "folder", "release", "account", "package"].contains(type ?? "") then type ?? "" else "" end
         let total = self.docs.store.audit_count(kind)
         let pages = if total == 0 then 1 else (total + PER_PAGE - 1) // PER_PAGE end
         let current = int_of(page) ?? 1
@@ -93,7 +97,7 @@ impl AuditPage
         end
         let rows = self.docs.store.audit(kind, PER_PAGE, (current - 1) * PER_PAGE).map(fun(e: AuditEntry) -> AuditRow row_of(e) end)
         let data = AuditData {
-            rows: rows, kind: kind, kind_all: kind == "", kind_page: kind == "page", kind_folder: kind == "folder", kind_release: kind == "release", kind_account: kind == "account", page: current, pages: pages, prev: current - 1, next: current + 1,
+            rows: rows, kind: kind, kind_all: kind == "", kind_page: kind == "page", kind_folder: kind == "folder", kind_release: kind == "release", kind_account: kind == "account", kind_package: kind == "package", page: current, pages: pages, prev: current - 1, next: current + 1,
             has_prev: current > 1, has_next: current < pages, csrf: session_of(req).csrf_field(),
         }
         render(self.docs, self.views, req, "audit", "Journal", "audit", Json.of(data))

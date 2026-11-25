@@ -112,6 +112,7 @@ fun build(db: Db, config: Config) -> web.App
     app.discover(Reflect.declared(audit_page))
     app.discover(Reflect.declared(account_page))
     app.discover(Reflect.declared(package_admin_page))
+    app.get("/playground", fun(req: Request) -> Response packages.playground(req) end)
     app.get("/packages", fun(req: Request) -> Response packages.list(req) end)
     app.get("/packages.json", fun(req: Request) -> Response packages.index(req) end)
     app.get("/packages/submit", fun(req: Request) -> Response packages.submit_form(req) end)

@@ -1,7 +1,7 @@
 import "@std/template.q" as template
 import "@std/web/session.q" as sessions
 
-let TEMPLATES = ["layout", "login", "dashboard", "tree", "page_form", "page_edit", "history", "diff", "import", "releases", "release", "audit", "accounts", "public_layout", "public_home", "public_page", "public_message", "public_search", "public_packages", "public_package", "public_submit", "admin_packages", "admin_package"]
+let TEMPLATES = ["layout", "login", "dashboard", "tree", "page_form", "page_edit", "history", "diff", "import", "releases", "release", "audit", "accounts", "public_layout", "public_home", "public_page", "public_message", "public_search", "public_packages", "public_package", "public_submit", "admin_packages", "admin_package", "public_playground"]
 
 --" The HTML pages: templates read once, a page is a template inside the layout. --"
 struct Views

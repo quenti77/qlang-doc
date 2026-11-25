@@ -110,6 +110,19 @@ impl PackagePages
         Response.json(self.registry.index_json()).with_header("Cache-Control", "public, max-age=60")
     end
 
+    --" The playground: qlang compiled to WebAssembly, run in the browser (see `public/playground/`). --"
+    public fun playground(self, req: Request) -> Response
+        let labels = {
+            "running": "Exécution…", "empty": "(aucune sortie)", "copied": "Lien copié", "copy_failed": "Lien dans la barre d'adresse",
+            "stopped_timeout": "Le programme a été arrêté : il a duré plus de 8 secondes.", "stopped_crash": "Le moteur a planté : réessaie.",
+        }
+        let data = {
+            "labels_examples": "Exemples", "labels_share": "Partager", "labels_reset": "Réinitialiser", "labels_input": "Entrée (une ligne par read())",
+            "labels_run": "Exécuter", "labels_output": "Sortie", "labels_json": Json.of(labels).to_text(),
+        }
+        self.views.public_page("public_playground", self.shell("Playground"), Json.of(data))
+    end
+
     public fun list(self, req: Request) -> Response
         let words = (req.query["q"] ?? "").trim()
         let keyword = (req.query["k"] ?? "").trim()

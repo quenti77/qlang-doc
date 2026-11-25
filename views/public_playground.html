@@ -1,0 +1,26 @@
+<main class="wrap playground">
+  <div class="pg-bar">
+    <h1>Playground</h1>
+    <select id="pg-examples" aria-label="{{ labels_examples }}"><option value="">{{ labels_examples }}</option></select>
+    <button class="btn" id="pg-share" type="button">{{ labels_share }}</button>
+    <button class="btn" id="pg-reset" type="button">{{ labels_reset }}</button>
+    <span class="muted" id="pg-status" role="status"></span>
+  </div>
+  <div class="pg-grid">
+    <section class="pg-pane">
+      <div class="ed">
+        <pre class="hl" aria-hidden="true"><code id="pg-colored"></code></pre>
+        <textarea id="pg-source" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Code qlang"></textarea>
+      </div>
+      <input id="pg-stdin" class="stdin" placeholder="{{ labels_input }}" hidden>
+      <div class="pg-run"><button class="btn primary" id="pg-run" type="button">{{ labels_run }}</button><span class="muted hint">Ctrl + Entrée</span></div>
+    </section>
+    <section class="pg-pane">
+      <h2>{{ labels_output }}</h2>
+      <output id="pg-output" aria-live="polite"></output>
+    </section>
+  </div>
+  <script type="application/json" id="pg-labels">{{ labels_json | raw }}</script>
+  <noscript><p>Le playground a besoin de JavaScript et de WebAssembly.</p></noscript>
+</main>
+<script type="module" src="/playground/playground.js"></script>

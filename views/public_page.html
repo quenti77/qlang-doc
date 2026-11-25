@@ -1,11 +1,14 @@
 <div class="wrap docs">
   <aside class="side" aria-label="Navigation">
+    <details class="side-details" open>
+    <summary>Navigation</summary>
     <nav>
     {% for n in nav %}
       {% if n.is_folder %}<p class="side-title" style="{{ n.style }}">{{ n.title }}</p>
       {% else %}<a href="{{ n.url }}" style="{{ n.style }}" {% if n.active %}aria-current="page"{% end %}>{{ n.title }}</a>{% end %}
     {% end %}
     </nav>
+    </details>
   </aside>
   <article class="content">
     {% if has_crumbs %}<p class="crumbs">{{ crumbs }}</p>{% end %}

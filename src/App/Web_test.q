@@ -136,6 +136,13 @@ fun test_suite()
         end)
     end)
 
+    describe("the playground", fun()
+        it("serves the page and the WebAssembly module", fun()
+            let s = site()
+            s.client.get("/playground").expect_status(200).expect_body_contains("pg-source")
+        end)
+    end)
+
     describe("the registry", fun()
         it("serves the index in the format of qlang search", fun()
             let s = site()

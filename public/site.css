@@ -38,3 +38,4 @@ footer { border-top:1px solid var(--line); color:var(--muted); padding:1.5rem 0;
 :root[data-theme="dark"] .tk-string { color:var(--s); } :root[data-theme="dark"] .tk-number, :root[data-theme="dark"] .tk-atom { color:var(--n); } :root[data-theme="dark"] .tk-type, :root[data-theme="dark"] .tk-typedef { color:var(--t); } :root[data-theme="dark"] .tk-fndef, :root[data-theme="dark"] .tk-fn { color:var(--f); }
 header.top .wrap { height:auto; min-height:3.5rem; flex-wrap:wrap; gap:.4rem 1.25rem; padding-top:.45rem; padding-bottom:.45rem; }
 @media (max-width:44rem) { header.top nav.main { order:5; flex:1 1 100%; } }
+a.card { color:inherit; display:block; } a.card:hover { text-decoration:none; border-color:var(--accent); }

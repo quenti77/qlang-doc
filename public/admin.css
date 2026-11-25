@@ -33,3 +33,19 @@ table.diff td { padding:.05rem .5rem; vertical-align:top; } table.diff td.no { w
 tr.line-add td { background:color-mix(in srgb, #16a34a 16%, var(--card)); } tr.line-del td { background:color-mix(in srgb, #dc2626 16%, var(--card)); } tr.gap td { text-align:center; color:var(--muted); background:var(--code); }
 .add { color:#16a34a; font-weight:600; } .del { color:#dc2626; font-weight:600; } .pager { display:flex; gap:1rem; align-items:center; margin-top:1rem; }
 .admin header.top nav.main { order:10; flex:1 1 100%; gap:1.1rem; padding-bottom:.1rem; } .admin header.top .brand { margin-right:auto; }
+.pop-body { max-width:calc(100vw - 2rem); }
+@media (max-width:44rem) {
+  .admin .wrap { padding-left:.75rem; padding-right:.75rem; }
+  table.list, table.list tbody, table.list tr, table.list td { display:block; width:100%; }
+  table.list thead { display:none; }
+  table.list tr { padding:.5rem 0; border-bottom:1px solid var(--line); } table.list tr:last-child { border-bottom:0; }
+  table.list td { border:0; padding:.15rem .75rem; text-align:left; } table.list td.right, td.actions { text-align:left; }
+  td.actions, .actions { justify-content:flex-start; } td.actions > * { margin:.2rem .3rem .2rem 0; }
+  .nowrap { white-space:normal; }
+  .head .actions { width:100%; justify-content:flex-start; }
+  .tabs { flex-wrap:wrap; max-width:100%; }
+  .pop-body { right:auto; left:0; min-width:14rem; }
+  details.pop { position:static; } .pop-body { position:static; margin-top:.4rem; box-shadow:none; }
+  .toolbar > * { flex:0 0 auto; }
+  textarea.editor { font-size:16px; } input, select, textarea { font-size:16px; }
+}

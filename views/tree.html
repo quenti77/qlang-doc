@@ -70,10 +70,10 @@
   <input type="hidden" name="return" value="{{ section_url }}">
   <span class="muted"><span id="bulk-count">0</span> sélectionné(s)</span>
   <label>Déplacer dans
-    <select name="to">{% for f in folders %}<option value="{{ f.value }}">{{ f.label }}</option>{% end %}</select>
+    <select name="to">{% for g in targets %}<optgroup label="{{ g.label }}"><option value="{{ g.top }}">{{ g.top_label }}</option>{% for o in g.options %}<option value="{{ o.value }}">{{ o.label }}</option>{% end %}</optgroup>{% end %}</select>
   </label>
   <button class="btn small" type="submit">Déplacer la sélection</button>
-  <span class="muted">« (racine) » met les dossiers à la racine de « {{ section_title }} ».</span>
+  <span class="muted">Les pages vont dans un dossier ; un dossier peut aller à la racine d'une section.</span>
 </form>
 <table class="list tree">
   <thead><tr><th><input type="checkbox" id="pick-all" aria-label="Tout sélectionner"> Titre</th><th>Adresse</th><th>Modifiée</th><th class="right">Actions</th></tr></thead>

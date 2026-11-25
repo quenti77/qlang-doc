@@ -1,7 +1,7 @@
 import "@std/web/app.q" as web
 import Docs from "../Docs/Docs.q"
-import Section from "../Docs/Models.q"
-import flatten from "../Docs/Tree.q"
+import Section, Folder from "../Docs/Models.q"
+import flatten, folder_paths from "../Docs/Tree.q"
 import Item from "../Docs/Tree.q"
 import Views from "./Views.q"
 import Choice, folder_choices from "./Choices.q"
@@ -30,6 +30,14 @@ struct SectionOption
     public current: bool
 end
 
+--" Where the selection can go: for each section, its top, then its folders. --"
+struct TargetGroup
+    public label: string
+    public top: string
+    public top_label: string
+    public options: array<Choice>
+end
+
 struct TreeData
     public locale: string
     public is_fr: bool
@@ -38,6 +46,7 @@ struct TreeData
     public rows: array<TreeRow>
     public empty: bool
     public folders: array<Choice>
+    public targets: array<TargetGroup>
     public tabs: array<SectionOption>
     public section: string
     public section_title: string
@@ -49,6 +58,26 @@ end
 fun options_of(all: array<Section>, selected: string, locale: string) -> array<SectionOption>
     all.map(fun(x: Section) -> SectionOption
         SectionOption { value: x.slug, label: x.title, selected: if x.slug == selected then "selected" else "" end, url: "/admin/docs?locale={locale}&section={x.slug}", current: x.slug == selected }
+    end)
+end
+
+fun targets_of(all: array<Section>, folders: array<Folder>) -> array<TargetGroup>
+    let paths = folder_paths(folders)
+    let roots: map<string, string> = {}
+    for f in folders do
+        if f.parent_id == none then
+            roots[f.slug] = f.section
+        end
+    end
+    all.map(fun(s: Section) -> TargetGroup
+        let options: array<Choice> = []
+        for f in folders do
+            let path = paths[f.id] ?? f.slug
+            if roots[path.split("/")[0]] == s.slug then
+                options.push(Choice { value: "{f.id}", label: path.replace("/", " / "), selected: false })
+            end
+        end
+        TargetGroup { label: s.title, top: "s:{s.slug}", top_label: "(racine de {s.title})", options: options.sorted_by(fun(a: Choice, b: Choice) -> int if a.label < b.label then -1 elseif a.label > b.label then 1 else 0 end end) }
     end)
 end
 
@@ -89,7 +118,7 @@ impl TreePage
         end)
         let data = TreeData {
             locale: lang, is_fr: lang == "fr", is_en: lang == "en", other: if lang == "fr" then "en" else "fr" end, rows: rows, empty: rows.is_empty(),
-            folders: folder_choices(self.docs, lang, none), tabs: options_of(all, chosen, lang), section: chosen, section_title: if title.is_empty() then chosen else title[0] end,
+            folders: folder_choices(self.docs, lang, none), targets: targets_of(all, folders), tabs: options_of(all, chosen, lang), section: chosen, section_title: if title.is_empty() then chosen else title[0] end,
             section_url: "/admin/docs?locale={lang}&section={chosen}", choices: options_of(all, chosen, lang), csrf: session_of(req).csrf_field(),
         }
         render(self.docs, self.views, req, "tree", "Documentation", "docs", Json.of(data))
@@ -127,8 +156,11 @@ impl TreePage
             if v == none or v.is_empty() then "" else v[0] end
         end
         let locale = locale_of(one("locale"))
-        let target = int_of(one("to"))
+        let to = one("to")
+        let target = if to.starts_with("s:") then none else int_of(to) end
         let section = one("section")
+        let dest = if to.starts_with("s:") then to.substring(2, to.len()) else "" end
+        let first = self.docs.default_section()
         let picks = form["pick"] ?? []
         let folders = self.docs.store.folders(locale)
         let parents: map<int, int> = {}
@@ -151,13 +183,26 @@ impl TreePage
             if self.under_picked(holder, parents, picked) then
                 continue
             end
+            if not p.starts_with("f") and target == none and dest != first then
+                problems.push("une page ne peut pas être à la racine de cette section : choisis un dossier")
+                continue
+            end
+            if p.starts_with("f") and target == none and holder == 0 then
+                let changed = self.docs.set_section(id, dest, actor)
+                if changed.is_err() then
+                    problems.push(changed.unwrap_err())
+                else
+                    moved += 1
+                end
+                continue
+            end
             let done: Result<bool, string> = if p.starts_with("f") then self.docs.move_folder(id, target, actor) else self.docs.move_page(id, target, actor) end
             if done.is_err() then
                 problems.push(done.unwrap_err())
             else
                 moved += 1
-                if p.starts_with("f") and target == none and section != "" then
-                    self.docs.set_section(id, section, actor)
+                if p.starts_with("f") and target == none and dest != "" then
+                    self.docs.set_section(id, dest, actor)
                 end
             end
         end

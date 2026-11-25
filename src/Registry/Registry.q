@@ -51,6 +51,19 @@ fun is_address(host: string) -> bool
     true
 end
 
+fun is_private_host(host: string) -> bool
+    not host.contains(".") or is_address(host) or host == "localhost" or host.ends_with(".local") or host.ends_with(".internal") or host.ends_with(".localhost")
+end
+
+fun has_url_char_only(rest: string) -> bool
+    for c in rest.chars() do
+        if not (c.is_digit() or c.is_alpha() or c == "." or c == "-" or c == "_" or c == "/" or c == "~") then
+            return false
+        end
+    end
+    true
+end
+
 --" The canonical form of a public https repository address (no `.git`, no trailing `/`), or an error that says what is wrong.
 `hosts` limits where it may live (empty: any public host). --"
 fun check_git_url(raw: string, hosts: array<string>) -> Result<string, string>
@@ -59,26 +72,22 @@ fun check_git_url(raw: string, hosts: array<string>) -> Result<string, string>
         return Err("L'adresse doit commencer par https:// (300 caractères au plus).")
     end
     let rest = url.substring(8, url.len())
-    for c in rest.chars() do
-        if not (c.is_digit() or c.is_alpha() or c == "." or c == "-" or c == "_" or c == "/" or c == "~") then
-            return Err("L'adresse contient des caractères non permis.")
-        end
+    if not has_url_char_only(rest) then
+        return Err("L'adresse contient des caractères non permis.")
     end
     let parts = rest.split("/").filter(fun(p: string) -> bool p != "" end)
     if parts.len() < 3 or parts.len() > 5 then
         return Err("L'adresse doit désigner un dépôt : https://hôte/propriétaire/dépôt")
     end
     let host = parts[0].lower()
-    if not host.contains(".") or is_address(host) or host == "localhost" or host.ends_with(".local") or host.ends_with(".internal") or host.ends_with(".localhost") then
+    if is_private_host(host) then
         return Err("L'hôte doit être un nom de domaine public.")
     end
     if not hosts.is_empty() and not hosts.contains(host) then
         return Err("Hôtes acceptés : {hosts.join(", ")}.")
     end
-    for p in parts do
-        if p == "." or p == ".." then
-            return Err("L'adresse contient des caractères non permis.")
-        end
+    if parts.contains(".") or parts.contains("..") then
+        return Err("L'adresse contient des caractères non permis.")
     end
     let path = parts.slice(1, parts.len()).join("/")
     let bare = path.strip_suffix(".git") ?? path

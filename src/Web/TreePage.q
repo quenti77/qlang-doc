@@ -89,6 +89,31 @@ struct TreePage
     views: Views
 end
 
+fun form_values(req: Request) -> map<string, array<string>>
+    let all = req.form_all()
+    if all.is_ok() then all.unwrap() else {} end
+end
+
+--" The parent of each folder, 0 for a folder at the root. --"
+fun parents_of(folders: array<Folder>) -> map<int, int>
+    let parents: map<int, int> = {}
+    for f in folders do
+        parents[f.id] = f.parent_id ?? 0
+    end
+    parents
+end
+
+--" The ids of the folders among the picked items (`f12` is a folder, `p7` a page). --"
+fun picked_folders(picks: array<string>) -> map<int, bool>
+    let picked: map<int, bool> = {}
+    for p in picks do
+        if p.starts_with("f") then
+            picked[(p.substring(1, p.len()).to_int() ?? 0)] = true
+        end
+    end
+    picked
+end
+
 impl TreePage
     #[web.Get("/docs")]
     public fun show(self, req: Request, #[web.Query] locale: string?, #[web.Query] section: string?) -> Response
@@ -147,10 +172,25 @@ impl TreePage
         self.done(req, Ok(true), "Dossier créé.", locale)
     end
 
+    --" Moves one picked item (`f12` is a folder, `p7` a page). A folder dropped at the root of a section goes into that section. --"
+    fun move_one(self, pick: string, id: int, holder: int, target: int?, dest: string, first: string, actor: int?) -> Result<bool, string>
+        let is_folder = pick.starts_with("f")
+        if not is_folder and target == none and dest != first then
+            return Err("une page ne peut pas être à la racine de cette section : choisis un dossier")
+        end
+        if is_folder and target == none and holder == 0 then
+            return self.docs.set_section(id, dest, actor)
+        end
+        let done: Result<bool, string> = if is_folder then self.docs.move_folder(id, target, actor) else self.docs.move_page(id, target, actor) end
+        if done.is_ok() and is_folder and target == none and dest != "" then
+            self.docs.set_section(id, dest, actor)
+        end
+        done
+    end
+
     #[web.Post("/bulk-move")]
     public fun bulk_move(self, req: Request) -> Response
-        let all = req.form_all()
-        let form: map<string, array<string>> = if all.is_ok() then all.unwrap() else {} end
+        let form = form_values(req)
         let one = fun(key: string) -> string
             let v = form[key]
             if v == none or v.is_empty() then "" else v[0] end
@@ -162,16 +202,8 @@ impl TreePage
         let first = self.docs.default_section()
         let picks = form["pick"] ?? []
         let folders = self.docs.store.folders(locale)
-        let parents: map<int, int> = {}
-        for f in folders do
-            parents[f.id] = f.parent_id ?? 0
-        end
-        let picked: map<int, bool> = {}
-        for p in picks do
-            if p.starts_with("f") then
-                picked[(p.substring(1, p.len()).to_int() ?? 0)] = true
-            end
-        end
+        let parents = parents_of(folders)
+        let picked = picked_folders(picks)
         let moved = 0
         let problems: array<string> = []
         let actor = uid_of(req)
@@ -182,27 +214,11 @@ impl TreePage
             if self.under_picked(holder, parents, picked) then
                 continue
             end
-            if not p.starts_with("f") and target == none and dest != first then
-                problems.push("une page ne peut pas être à la racine de cette section : choisis un dossier")
-                continue
-            end
-            if p.starts_with("f") and target == none and holder == 0 then
-                let changed = self.docs.set_section(id, dest, actor)
-                if changed.is_err() then
-                    problems.push(changed.unwrap_err())
-                else
-                    moved += 1
-                end
-                continue
-            end
-            let done: Result<bool, string> = if p.starts_with("f") then self.docs.move_folder(id, target, actor) else self.docs.move_page(id, target, actor) end
+            let done = self.move_one(p, id, holder, target, dest, first, actor)
             if done.is_err() then
                 problems.push(done.unwrap_err())
             else
                 moved += 1
-                if p.starts_with("f") and target == none and dest != "" then
-                    self.docs.set_section(id, dest, actor)
-                end
             end
         end
         if moved > 0 then

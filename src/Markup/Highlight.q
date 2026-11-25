@@ -46,6 +46,65 @@ fun classify(word: string, previous: string) -> string
     "name"
 end
 
+--" Where a comment that starts at `i` ends: the end of the line, or the end of a documentation block. --"
+fun comment_end(chars: array<string>, n: int, start: int, doc: bool) -> int
+    let i = start
+    if doc then
+        i = i + 3
+        while i < n and not (chars[i] == "-" and i + 2 < n and chars[i + 1] == "-" and chars[i + 2] == "\"") do
+            i = i + 1
+        end
+        i = i + 3
+        if i > n then i = n end
+        return i
+    end
+    i = i + 2
+    while i < n and chars[i] != "\n" do
+        i = i + 1
+    end
+    i
+end
+
+--" Where a string that starts at `start` ends, after its closing quote. --"
+fun string_end(chars: array<string>, n: int, start: int) -> int
+    let i = start + 1
+    while i < n and chars[i] != "\"" do
+        if chars[i] == "\\" then
+            i = i + 1
+        end
+        i = i + 1
+    end
+    i = i + 1
+    if i > n then i = n end
+    i
+end
+
+fun number_end(chars: array<string>, n: int, start: int) -> int
+    let i = start
+    while i < n and (chars[i].is_digit() or chars[i] == "." or chars[i] == "_") do
+        i = i + 1
+    end
+    i
+end
+
+fun word_end(chars: array<string>, n: int, start: int) -> int
+    let i = start
+    while i < n and is_word_char(chars[i]) do
+        i = i + 1
+    end
+    i
+end
+
+--" The colour of a word; a plain name followed by `(` is a function call. --"
+fun word_kind(word: string, previous: string, called: bool) -> string
+    let kind = classify(word, previous)
+    if kind == "name" and called then "fn" else kind end
+end
+
+fun is_blank(c: string) -> bool
+    c == " " or c == "\n" or c == "\t"
+end
+
 --" The code as HTML, one `<span>` per coloured piece. --"
 fun highlight(code: string) -> string
     let chars = code.chars()
@@ -58,54 +117,28 @@ fun highlight(code: string) -> string
         let start = i
         if c == "-" and i + 1 < n and chars[i + 1] == "-" then
             let doc = i + 2 < n and chars[i + 2] == "\""
-            if doc then
-                i = i + 3
-                while i < n and not (chars[i] == "-" and i + 2 < n and chars[i + 1] == "-" and chars[i + 2] == "\"") do
-                    i = i + 1
-                end
-                i = i + 3
-                if i > n then i = n end
-            else
-                while i < n and chars[i] != "\n" do
-                    i = i + 1
-                end
-            end
+            i = comment_end(chars, n, i, doc)
             out = out + span(if doc then "doc" else "comment" end, chars.slice(start, i).join(""))
         elseif c == "\"" then
-            i = i + 1
-            while i < n and chars[i] != "\"" do
-                if chars[i] == "\\" then
-                    i = i + 1
-                end
-                i = i + 1
-            end
-            i = i + 1
-            if i > n then i = n end
+            i = string_end(chars, n, i)
             out = out + span("string", chars.slice(start, i).join(""))
         elseif c.is_digit() then
-            while i < n and (chars[i].is_digit() or chars[i] == "." or chars[i] == "_") do
-                i = i + 1
-            end
+            i = number_end(chars, n, i)
             out = out + span("number", chars.slice(start, i).join(""))
         elseif is_word_start(c) then
-            while i < n and is_word_char(chars[i]) do
-                i = i + 1
-            end
+            i = word_end(chars, n, i)
             let word = chars.slice(start, i).join("")
-            let kind = classify(word, previous)
-            if kind == "name" and i < n and chars[i] == "(" then
-                kind = "fn"
-            end
+            let kind = word_kind(word, previous, i < n and chars[i] == "(")
             previous = word
             out = out + span(kind, word)
-        elseif c == " " or c == "\n" or c == "\t" then
+        elseif is_blank(c) then
             i = i + 1
             out = out + c
         else
             i = i + 1
             out = out + span("punct", c)
         end
-        if c != " " and c != "\n" and c != "\t" and not is_word_start(c) then
+        if not is_blank(c) and not is_word_start(c) then
             previous = ""
         end
     end

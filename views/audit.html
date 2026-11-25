@@ -1,22 +1,13 @@
 <div class="head">
   <h1>Journal</h1>
-  <div class="tabs">
-    <a href="/admin/audit" {% if kind_all %}aria-current="page"{% end %}>Tout</a>
-    <a href="/admin/audit?type=page" {% if kind_page %}aria-current="page"{% end %}>Pages</a>
-    <a href="/admin/audit?type=folder" {% if kind_folder %}aria-current="page"{% end %}>Dossiers</a>
-    <a href="/admin/audit?type=release" {% if kind_release %}aria-current="page"{% end %}>Versions</a>
-    <a href="/admin/audit?type=package" {% if kind_package %}aria-current="page"{% end %}>Paquets</a>
-    <a href="/admin/audit?type=account" {% if kind_account %}aria-current="page"{% end %}>Comptes</a>
-  </div>
 </div>
 <form method="get" action="/admin/audit" class="filters">
-  <input type="hidden" name="type" value="{{ kind }}">
   <label>Du <input type="date" name="from" value="{{ since }}"></label>
   <label>au <input type="date" name="to" value="{{ until }}"></label>
   <label>Par <input name="user" list="audit-users" value="{{ user_value }}" placeholder="Tout le monde" autocomplete="off"><datalist id="audit-users">{% for u in users %}<option value="{{ u.value }}">{% end %}</datalist></label>
-  <label>Action <select name="action">{% for a in actions %}<option value="{{ a.value }}" {{ a.selected }}>{{ a.label }}</option>{% end %}</select></label>
+  <label>Action <select name="action"><option value="">Toutes les actions</option>{% for g in actions %}<optgroup label="{{ g.label }}">{% for a in g.options %}<option value="{{ a.value }}" {{ a.selected }}>{{ a.label }}</option>{% end %}</optgroup>{% end %}</select></label>
   <button class="btn small" type="submit">Filtrer</button>
-  {% if filtered %}<a class="btn small" href="/admin/audit?type={{ kind }}">Réinitialiser</a>{% end %}
+  {% if filtered %}<a class="btn small" href="/admin/audit">Réinitialiser</a>{% end %}
   <span class="muted">{{ total }} entrée(s)</span>
 </form>
 <table class="list">

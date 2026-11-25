@@ -33,11 +33,30 @@ struct Choice
     public selected: string
 end
 
+--" The actions of one kind of thing, for an `<optgroup>`. --"
+struct ActionGroup
+    public label: string
+    public options: array<Choice>
+end
+
+let GROUPS = [("page", "Pages"), ("folder", "Dossiers"), ("section", "Sections"), ("release", "Versions"), ("package", "Paquets"), ("account", "Comptes")]
+
+fun grouped_actions(keys: array<string>, wanted: string) -> array<ActionGroup>
+    let out: array<ActionGroup> = []
+    for g in GROUPS do
+        let options = keys.filter(fun(k: string) -> bool k.starts_with(g.0 + ".") end).map(fun(k: string) -> Choice Choice { value: k, label: action_label(k), selected: if k == wanted then "selected" else "" end } end)
+        if not options.is_empty() then
+            out.push(ActionGroup { label: g.1, options: options })
+        end
+    end
+    out
+end
+
 struct AuditData
     public rows: array<AuditRow>
     public users: array<Choice>
     public user_value: string
-    public actions: array<Choice>
+    public actions: array<ActionGroup>
     public since: string
     public until: string
     public query: string
@@ -132,10 +151,10 @@ fun link_of(e: AuditEntry, data: Json) -> string
     end
     let id = e.entity_id
     if e.entity_type == "page" and e.action != "page.delete" then
-        let older = number_in(data, "from")
-        let newer = number_in(data, "to")
-        if older != none and newer != none and (e.action == "page.edit" or e.action == "page.import" or e.action == "page.restore") then
-            return "/admin/pages/{id}/diff?from={older}&to={newer}"
+        let first_rev = number_in(data, "from") ?? -1
+        let last_rev = number_in(data, "to") ?? -1
+        if first_rev >= 0 and last_rev >= 0 and (e.action == "page.edit" or e.action == "page.import" or e.action == "page.restore") then
+            return "/admin/pages/{id}/diff?from={first_rev}&to={last_rev}"
         end
         return "/admin/pages/{id}"
     end
@@ -189,10 +208,7 @@ impl AuditPage
         let narrowed = kind != "" or who != "" or wanted_action != "" or day_start != none or day_end != none
         let shown = if narrowed then rows else grouped(rows) end
         let users: array<Choice> = self.docs.store.accounts().map(fun(a: Account) -> Choice Choice { value: a.login, label: a.login, selected: "" } end)
-        let actions: array<Choice> = [Choice { value: "", label: "Toutes les actions", selected: "" }]
-        for key in self.docs.store.audit_actions() do
-            actions.push(Choice { value: key, label: action_label(key), selected: if key == wanted_action then "selected" else "" end })
-        end
+        let actions = grouped_actions(self.docs.store.audit_actions(), wanted_action)
         let since_text = if day_start == none then "" else (since ?? "") end
         let until_text = if day_end == none then "" else (until ?? "") end
         let query = "type={kind}&user={Url.encode(who)}&action={wanted_action}&from={since_text}&to={until_text}"

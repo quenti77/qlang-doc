@@ -69,11 +69,14 @@
   <input type="hidden" name="section" value="{{ section }}">
   <input type="hidden" name="return" value="{{ section_url }}">
   <span class="muted"><span id="bulk-count">0</span> sélectionné(s)</span>
-  <label>Déplacer dans
-    <select name="to">{% for g in targets %}<optgroup label="{{ g.label }}"><option value="{{ g.top }}">{{ g.top_label }}</option>{% for o in g.options %}<option value="{{ o.value }}">{{ o.label }}</option>{% end %}</optgroup>{% end %}</select>
+  <label>Section
+    <select name="dest" id="bulk-section">{% for g in targets %}<option value="{{ g.slug }}" {{ g.selected }}>{{ g.label }}</option>{% end %}</select>
+  </label>
+  <label>Dossier
+    <select name="to" id="bulk-folder"><option value="" data-section="*">(racine de la section)</option>{% for g in targets %}{% for o in g.options %}<option value="{{ o.value }}" data-section="{{ g.slug }}">{{ o.label }}</option>{% end %}{% end %}</select>
   </label>
   <button class="btn small" type="submit">Déplacer la sélection</button>
-  <span class="muted">Les pages vont dans un dossier ; un dossier peut aller à la racine d'une section.</span>
+  <span class="muted">Les pages vont dans un dossier ; un dossier peut aller à la racine de la section.</span>
 </form>
 <table class="list tree">
   <thead><tr><th><input type="checkbox" id="pick-all" aria-label="Tout sélectionner"> Titre</th><th>Adresse</th><th>Modifiée</th><th class="right">Actions</th></tr></thead>

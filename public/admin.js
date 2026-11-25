@@ -47,6 +47,20 @@
     counter();
   });
 
+  // the folder list of the bulk bar follows the section that is chosen
+  var sectionSelect = document.getElementById("bulk-section");
+  var folderSelect = document.getElementById("bulk-folder");
+  function filterFolders() {
+    if (!sectionSelect || !folderSelect) return;
+    Array.prototype.forEach.call(folderSelect.options, function (o) {
+      var show = o.dataset.section === "*" || o.dataset.section === sectionSelect.value;
+      o.hidden = !show;
+      o.disabled = !show;
+    });
+    folderSelect.value = "";
+  }
+  if (sectionSelect) { sectionSelect.addEventListener("change", filterFolders); filterFolders(); }
+
   var source = document.getElementById("markdown");
   var preview = document.getElementById("preview");
   if (!source || !preview) return;

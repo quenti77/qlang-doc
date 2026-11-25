@@ -33,8 +33,8 @@ end
 --" Where the selection can go: for each section, its top, then its folders. --"
 struct TargetGroup
     public label: string
-    public top: string
-    public top_label: string
+    public slug: string
+    public selected: string
     public options: array<Choice>
 end
 
@@ -61,7 +61,7 @@ fun options_of(all: array<Section>, selected: string, locale: string) -> array<S
     end)
 end
 
-fun targets_of(all: array<Section>, folders: array<Folder>) -> array<TargetGroup>
+fun targets_of(all: array<Section>, folders: array<Folder>, current: string) -> array<TargetGroup>
     let paths = folder_paths(folders)
     let roots: map<string, string> = {}
     for f in folders do
@@ -77,7 +77,7 @@ fun targets_of(all: array<Section>, folders: array<Folder>) -> array<TargetGroup
                 options.push(Choice { value: "{f.id}", label: path.replace("/", " / "), selected: false })
             end
         end
-        TargetGroup { label: s.title, top: "s:{s.slug}", top_label: "(racine de {s.title})", options: options.sorted_by(fun(a: Choice, b: Choice) -> int if a.label < b.label then -1 elseif a.label > b.label then 1 else 0 end end) }
+        TargetGroup { label: s.title, slug: s.slug, selected: if s.slug == current then "selected" else "" end, options: options.sorted_by(fun(a: Choice, b: Choice) -> int if a.label < b.label then -1 elseif a.label > b.label then 1 else 0 end end) }
     end)
 end
 
@@ -118,7 +118,7 @@ impl TreePage
         end)
         let data = TreeData {
             locale: lang, is_fr: lang == "fr", is_en: lang == "en", other: if lang == "fr" then "en" else "fr" end, rows: rows, empty: rows.is_empty(),
-            folders: folder_choices(self.docs, lang, none), targets: targets_of(all, folders), tabs: options_of(all, chosen, lang), section: chosen, section_title: if title.is_empty() then chosen else title[0] end,
+            folders: folder_choices(self.docs, lang, none), targets: targets_of(all, folders, chosen), tabs: options_of(all, chosen, lang), section: chosen, section_title: if title.is_empty() then chosen else title[0] end,
             section_url: "/admin/docs?locale={lang}&section={chosen}", choices: options_of(all, chosen, lang), csrf: session_of(req).csrf_field(),
         }
         render(self.docs, self.views, req, "tree", "Documentation", "docs", Json.of(data))
@@ -156,10 +156,9 @@ impl TreePage
             if v == none or v.is_empty() then "" else v[0] end
         end
         let locale = locale_of(one("locale"))
-        let to = one("to")
-        let target = if to.starts_with("s:") then none else int_of(to) end
+        let target = int_of(one("to"))
         let section = one("section")
-        let dest = if to.starts_with("s:") then to.substring(2, to.len()) else "" end
+        let dest = if target == none then one("dest") else "" end
         let first = self.docs.default_section()
         let picks = form["pick"] ?? []
         let folders = self.docs.store.folders(locale)

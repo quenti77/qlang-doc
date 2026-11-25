@@ -13,7 +13,7 @@
   <input type="hidden" name="type" value="{{ kind }}">
   <label>Du <input type="date" name="from" value="{{ since }}"></label>
   <label>au <input type="date" name="to" value="{{ until }}"></label>
-  <label>Par <select name="user">{% for u in users %}<option value="{{ u.value }}" {{ u.selected }}>{{ u.label }}</option>{% end %}</select></label>
+  <label>Par <input name="user" list="audit-users" value="{{ user_value }}" placeholder="Tout le monde" autocomplete="off"><datalist id="audit-users">{% for u in users %}<option value="{{ u.value }}">{% end %}</datalist></label>
   <label>Action <select name="action">{% for a in actions %}<option value="{{ a.value }}" {{ a.selected }}>{{ a.label }}</option>{% end %}</select></label>
   <button class="btn small" type="submit">Filtrer</button>
   {% if filtered %}<a class="btn small" href="/admin/audit?type={{ kind }}">Réinitialiser</a>{% end %}

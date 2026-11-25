@@ -1,5 +1,5 @@
 <h1>Nouvelle page</h1>
-<form method="post" action="/admin/pages" class="stack wide">
+<form method="post" action="/admin/pages" class="stack">
   {{ csrf | raw }}
   <input type="hidden" name="locale" value="{{ locale }}">
   <div class="row">
@@ -9,6 +9,12 @@
       <select name="folder">{% for f in folders %}<option value="{{ f.value }}" {% if f.selected %}selected{% end %}>{{ f.label }}</option>{% end %}</select>
     </label>
   </div>
-  <label>Markdown <textarea name="markdown" class="editor" rows="18">{{ markdown }}</textarea></label>
+  <div class="split">
+    <label>Markdown <textarea id="markdown" name="markdown" class="editor" rows="22" spellcheck="false">{{ markdown }}</textarea></label>
+    <div>
+      <h2 class="small">Aperçu <span class="muted" id="preview-state"></span></h2>
+      <div id="preview" class="prose card"></div>
+    </div>
+  </div>
   <div><button class="btn primary" type="submit">Créer la page</button> <a class="btn" href="/admin/docs?locale={{ locale }}">Annuler</a></div>
 </form>

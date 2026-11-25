@@ -79,4 +79,5 @@
     }).catch(function () { if (state) state.textContent = "(aperçu indisponible)"; });
   }
   source.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(render, 350); });
+  if (source.value.trim() !== "") render();
 })();

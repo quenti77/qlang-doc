@@ -24,6 +24,7 @@ struct DashboardData
     public has_published: bool
     public changes: array<ChangeRow>
     public has_changes: bool
+    public change_count: int
     public activity: array<ActivityRow>
     public csrf: string
 end
@@ -55,6 +56,7 @@ impl DashboardPage
             has_published: release != none,
             changes: changes,
             has_changes: not changes.is_empty(),
+            change_count: changes.len(),
             activity: activity,
             csrf: session_of(req).csrf_field(),
         }

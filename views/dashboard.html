@@ -10,14 +10,17 @@
 
 <h2>En attente de publication</h2>
 {% if has_changes %}
-<table class="list">
-  <thead><tr><th>Changement</th><th>Langue</th><th>Page</th></tr></thead>
-  <tbody>
-  {% for c in changes %}
-    <tr><td><span class="badge">{{ c.label }}</span></td><td>{{ c.locale }}</td><td>{{ c.title }} <span class="muted">/{{ c.path }}</span></td></tr>
-  {% end %}
-  </tbody>
-</table>
+<details class="more">
+  <summary>{{ change_count }} changement(s) depuis la version publiée</summary>
+  <table class="list">
+    <thead><tr><th>Changement</th><th>Langue</th><th>Page</th></tr></thead>
+    <tbody>
+    {% for c in changes %}
+      <tr><td><span class="badge">{{ c.label }}</span></td><td>{{ c.locale }}</td><td>{{ c.title }} <span class="muted">/{{ c.path }}</span></td></tr>
+    {% end %}
+    </tbody>
+  </table>
+</details>
 {% else %}
 <p class="muted">Rien : la copie de travail est identique à la version publiée.</p>
 {% end %}

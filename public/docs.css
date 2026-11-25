@@ -10,7 +10,7 @@ details.pop { position:relative; } details.pop > summary { list-style:none; curs
 @media (max-width:44rem) { .docs { grid-template-columns:1fr; } .side { border-bottom:1px solid var(--line); padding-bottom:1rem; } .search input { width:8rem; } }
 .side, .toc { position:sticky; top:1rem; max-height:calc(100vh - 2rem); overflow:auto; font-size:.92rem; } .side nav { display:flex; flex-direction:column; }
 .side a, .toc a { display:block; padding:.22rem .5rem; color:var(--muted); border-radius:.35rem; } .side a:hover, .toc a:hover { color:var(--fg); text-decoration:none; background:var(--code); } .side a[aria-current="page"] { color:var(--accent); font-weight:600; background:var(--code); }
-.side-title { margin:.9rem 0 .2rem; font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }
+.side-title { display:block; width:100%; text-align:left; background:none; border:0; cursor:pointer; font-family:inherit; margin:.5rem 0 .1rem; font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }
 .crumbs { margin:0 0 .5rem; color:var(--muted); font-size:.85rem; }
 .pager-docs { display:flex; justify-content:space-between; gap:1rem; margin-top:3rem; padding-top:1rem; border-top:1px solid var(--line); }
 .prose { line-height:1.7; overflow-wrap:break-word; } .prose.card { padding:1rem 1.25rem; }
@@ -68,3 +68,7 @@ input, select { font:inherit; color:var(--fg); background:var(--card); border:1p
 .row input { min-width:0; } .pkg-layout > *, .docs > *, .pg-grid > * { min-width:0; }
 @media (max-width:50rem) { .pkg-layout { grid-template-columns:minmax(0,1fr); } }
 @media (max-width:44rem) { .docs { grid-template-columns:minmax(0,1fr); } .pg-grid { grid-template-columns:minmax(0,1fr); } }
+
+.side-title::before { content:"▸"; display:inline-block; width:1rem; transition:transform .12s; } .side-title[aria-expanded="true"]::before { transform:rotate(90deg); } .side-title:hover { color:var(--fg); }
+.side [hidden] { display:none; }
+.side-tools { display:flex; gap:.5rem; margin:0 0 .6rem; } .side-tools button { background:none; border:0; padding:0; font:inherit; font-size:.78rem; color:var(--muted); cursor:pointer; text-decoration:underline; } .side-tools button:hover { color:var(--accent); }

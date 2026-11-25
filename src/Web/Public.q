@@ -21,6 +21,9 @@ struct NavItem
     public url: string
     public style: string
     public active: bool
+    public path: string
+    public hidden: string
+    public expanded: string
 end
 
 struct TocItem
@@ -109,16 +112,21 @@ fun depth_of(path: string) -> int
     path.split("/").len() - 1
 end
 
+--" A nav entry starts hidden unless its folder is on the way to the page being read. --"
+fun hidden_attr(parent: string, active: string) -> string
+    if parent == "" or active.starts_with(parent + "/") then "" else "hidden" end
+end
+
 --" The documentation of a release as a list in reading order: each folder, then what it holds (folders first, then pages). --"
 fun ordered(folders: array<SnapFolder>, pages: array<SnapPage>, parent: string, out: array<NavItem>, seq: array<SnapPage>, active: string, base: string, suffix: string)
     let subs = folders.filter(fun(f: SnapFolder) -> bool parent_of(f.path) == parent end).sorted_by(fun(a: SnapFolder, b: SnapFolder) -> int a.position - b.position end)
     for f in subs do
-        out.push(NavItem { is_folder: true, title: f.title, url: "", style: "padding-left:{depth_of(f.path) + 0.5}rem", active: false })
+        out.push(NavItem { is_folder: true, title: f.title, url: "", style: "padding-left:{depth_of(f.path) + 0.5}rem", active: false, path: f.path, hidden: hidden_attr(parent, active), expanded: if active.starts_with(f.path + "/") then "true" else "false" end })
         ordered(folders, pages, f.path, out, seq, active, base, suffix)
     end
     let leaves = pages.filter(fun(p: SnapPage) -> bool parent_of(p.path) == parent end).sorted_by(fun(a: SnapPage, b: SnapPage) -> int a.position - b.position end)
     for p in leaves do
-        out.push(NavItem { is_folder: false, title: p.title, url: "{base}/{p.path}{suffix}", style: "padding-left:{depth_of(p.path) + 0.5}rem", active: p.path == active })
+        out.push(NavItem { is_folder: false, title: p.title, url: "{base}/{p.path}{suffix}", style: "padding-left:{depth_of(p.path) + 0.5}rem", active: p.path == active, path: p.path, hidden: hidden_attr(parent, active), expanded: "false" })
         seq.push(p)
     end
 end

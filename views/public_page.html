@@ -2,10 +2,11 @@
   <aside class="side" aria-label="Navigation">
     <details class="side-details" open>
     <summary>Navigation</summary>
+    <div class="side-tools"><button type="button" data-fold="open">Tout déplier</button><button type="button" data-fold="close">Tout replier</button></div>
     <nav>
     {% for n in nav %}
-      {% if n.is_folder %}<p class="side-title" style="{{ n.style }}">{{ n.title }}</p>
-      {% else %}<a href="{{ n.url }}" style="{{ n.style }}" {% if n.active %}aria-current="page"{% end %}>{{ n.title }}</a>{% end %}
+      {% if n.is_folder %}<button type="button" class="side-title" data-path="{{ n.path }}" aria-expanded="{{ n.expanded }}" style="{{ n.style }}" {{ n.hidden }}>{{ n.title }}</button>
+      {% else %}<a href="{{ n.url }}" data-path="{{ n.path }}" style="{{ n.style }}" {{ n.hidden }} {% if n.active %}aria-current="page"{% end %}>{{ n.title }}</a>{% end %}
     {% end %}
     </nav>
     </details>

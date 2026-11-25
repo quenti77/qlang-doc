@@ -6,10 +6,13 @@
   </div>
 </div>
 
-<div class="tabs sections">
+<div class="sections-bar">
+<div class="tabs">
   {% for t in tabs %}<a href="{{ t.url }}" {% if t.current %}aria-current="page"{% end %}>{{ t.label }}</a>{% end %}
+</div>
+<div class="section-tools">
   <details class="pop">
-    <summary>＋ Section</summary>
+    <summary class="icon" title="Nouvelle section" aria-label="Nouvelle section">＋</summary>
     <form method="post" action="/admin/sections" class="stack pop-body">
       {{ csrf | raw }}
       <input type="hidden" name="locale" value="{{ locale }}">
@@ -19,7 +22,7 @@
     </form>
   </details>
   <details class="pop">
-    <summary title="Réglages de « {{ section_title }} »" aria-label="Réglages de la section {{ section_title }}">⚙</summary>
+    <summary class="icon" title="Réglages de « {{ section_title }} »" aria-label="Réglages de la section {{ section_title }}">⚙</summary>
     <div class="pop-body">
       <form method="post" action="/admin/sections/{{ section }}" class="stack">
         {{ csrf | raw }}
@@ -33,6 +36,7 @@
       </form>
     </div>
   </details>
+</div>
 </div>
 
 <div class="toolbar">

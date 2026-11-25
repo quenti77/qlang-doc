@@ -12,6 +12,23 @@
     document.querySelectorAll('tr[data-in="' + button.dataset.group + '"]').forEach(function (row) { row.hidden = !open; });
   });
 
+  // a button with data-twostep asks again on its own label before it sends: first click arms it, second click sends
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest && event.target.closest("button[data-twostep]");
+    if (!button) return;
+    if (button.dataset.armed === "1") return;
+    event.preventDefault();
+    button.dataset.armed = "1";
+    button.dataset.label = button.textContent;
+    button.textContent = button.dataset.twostep;
+    button.classList.add("armed");
+    setTimeout(function () {
+      button.dataset.armed = "";
+      button.textContent = button.dataset.label;
+      button.classList.remove("armed");
+    }, 4000);
+  });
+
   var picks = function () { return Array.prototype.slice.call(document.querySelectorAll('input[name="pick"]')); };
   var counter = function () {
     var count = document.getElementById("bulk-count");

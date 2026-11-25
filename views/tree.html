@@ -31,8 +31,8 @@
         <label>Titre <input name="title" value="{{ section_title }}" required></label>
         <button class="btn primary" type="submit">Renommer</button>
       </form>
-      <form method="post" action="/admin/sections/{{ section }}/delete" data-confirm="Supprimer cette section ? Elle doit être vide.">
-        {{ csrf | raw }}<input type="hidden" name="locale" value="{{ locale }}"><button class="btn danger" type="submit">Supprimer</button>
+      <form method="post" action="/admin/sections/{{ section }}/delete">
+        {{ csrf | raw }}<input type="hidden" name="locale" value="{{ locale }}"><button class="btn danger" type="submit" data-twostep="Confirmer la suppression">Supprimer</button>
       </form>
     </div>
   </details>

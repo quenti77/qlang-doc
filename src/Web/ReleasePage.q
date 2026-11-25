@@ -13,6 +13,8 @@ struct ReleaseRow
     public at: string
     public pages: int
     public current: bool
+    public changes: array<PendingRow>
+    public change_count: int
 end
 
 struct PendingRow
@@ -45,8 +47,14 @@ struct ReleaseData
     public csrf: string
 end
 
+fun change_rows(changes: array<Change>) -> array<PendingRow>
+    changes.map(fun(c: Change) -> PendingRow
+        PendingRow { label: if c.kind == "new" then "Nouvelle" elseif c.kind == "deleted" then "Supprimée" else "Modifiée" end, locale: c.locale, path: c.path, title: c.title }
+    end)
+end
+
 fun row_of(r: Release) -> ReleaseRow
-    ReleaseRow { id: r.id, label: r.label, qlang_version: r.qlang_version, note: r.note, author: if r.author == "" then "—" else r.author end, at: when(r.created_at), pages: r.pages, current: r.current }
+    ReleaseRow { id: r.id, label: r.label, qlang_version: r.qlang_version, note: r.note, author: if r.author == "" then "—" else r.author end, at: when(r.created_at), pages: r.pages, current: r.current, changes: [], change_count: 0 }
 end
 
 --" Releases: a frozen copy of the documentation tied to a qlang version. The public site serves the published one; going back to an older one is one click. --"
@@ -60,10 +68,13 @@ end
 impl ReleasePage
     #[web.Get("")]
     public fun list(self, req: Request) -> Response
-        let releases = self.docs.store.releases().map(fun(r: Release) -> ReleaseRow row_of(r) end)
-        let pending = self.docs.pending_changes().map(fun(c: Change) -> PendingRow
-            PendingRow { label: if c.kind == "new" then "Nouvelle" elseif c.kind == "deleted" then "Supprimée" else "Modifiée" end, locale: c.locale, path: c.path, title: c.title }
+        let releases = self.docs.store.releases().map(fun(r: Release) -> ReleaseRow
+            let row = row_of(r)
+            row.changes = change_rows(self.docs.release_changes(r.id))
+            row.change_count = row.changes.len()
+            row
         end)
+        let pending = change_rows(self.docs.pending_changes())
         let data = ReleasesData {
             releases: releases, has_releases: not releases.is_empty(), pending: pending, has_pending: not pending.is_empty(), pending_count: pending.len(),
             suggestion: if releases.is_empty() then "" else releases[0].qlang_version end, csrf: session_of(req).csrf_field(),

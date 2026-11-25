@@ -588,34 +588,48 @@ impl Docs
 
     --" What differs between the working copy and the published release: new, changed and deleted pages. --"
     public fun pending_changes(self) -> array<Change>
-        let out: array<Change> = []
         let current = self.store.current_release_id()
-        let snap = self.snapshot()
-        let published: map<string, SnapPage> = {}
-        if current != none then
-            for sp in self.store.release_pages(current) do
-                published["{sp.locale}:{sp.path}"] = sp
-            end
-        end
-        let seen: map<string, bool> = {}
-        for p in snap.1 do
-            let key = "{p.locale}:{p.path}"
-            seen[key] = true
-            let old = published[key]
-            if old == none then
-                out.push(Change { kind: "new", locale: p.locale, path: p.path, title: p.title })
-            elseif old.unwrap().markdown != p.markdown or old.unwrap().title != p.title then
-                out.push(Change { kind: "changed", locale: p.locale, path: p.path, title: p.title })
-            end
-        end
-        for key in published.keys() do
-            if seen[key] == none then
-                let old = published[key].unwrap()
-                out.push(Change { kind: "deleted", locale: old.locale, path: old.path, title: old.title })
-            end
-        end
-        out
+        changes_between(if current == none then [] else self.store.release_pages(current) end, self.snapshot().1)
     end
+
+    --" What a release changed compared to the one made just before it (everything is new for the first). --"
+    public fun release_changes(self, id: int) -> array<Change>
+        let all = self.store.releases()
+        let before: array<SnapPage> = []
+        for i in 0..all.len() do
+            if all[i].id == id and i + 1 < all.len() then
+                before = self.store.release_pages(all[i + 1].id)
+            end
+        end
+        changes_between(before, self.store.release_pages(id))
+    end
+end
+
+--" New, changed and deleted pages going from `old` to `now`. --"
+fun changes_between(old: array<SnapPage>, now: array<SnapPage>) -> array<Change>
+    let out: array<Change> = []
+    let before: map<string, SnapPage> = {}
+    for sp in old do
+        before["{sp.locale}:{sp.path}"] = sp
+    end
+    let seen: map<string, bool> = {}
+    for p in now do
+        let key = "{p.locale}:{p.path}"
+        seen[key] = true
+        let was = before[key]
+        if was == none then
+            out.push(Change { kind: "new", locale: p.locale, path: p.path, title: p.title })
+        elseif was.unwrap().markdown != p.markdown or was.unwrap().title != p.title then
+            out.push(Change { kind: "changed", locale: p.locale, path: p.path, title: p.title })
+        end
+    end
+    for key in before.keys() do
+        if seen[key] == none then
+            let gone = before[key].unwrap()
+            out.push(Change { kind: "deleted", locale: gone.locale, path: gone.path, title: gone.title })
+        end
+    end
+    out
 end
 
 fun opt_json(v: int?) -> Json

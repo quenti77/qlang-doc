@@ -3,7 +3,7 @@
 
 <h2>Créer une version</h2>
 {% if has_pending %}
-<details class="more" open>
+<details class="more">
   <summary>{{ pending_count }} changement(s) depuis la version publiée</summary>
   <table class="list">
     <tbody>
@@ -47,6 +47,16 @@
         {% end %}
       </td>
     </tr>
+    {% if r.change_count %}
+    <tr class="changes"><td colspan="6">
+      <details class="more">
+        <summary>{{ r.change_count }} changement(s) depuis la version précédente</summary>
+        <table class="list"><tbody>
+        {% for c in r.changes %}<tr><td><span class="badge">{{ c.label }}</span></td><td>{{ c.locale }}</td><td>{{ c.title }} <span class="muted">/{{ c.path }}</span></td></tr>{% end %}
+        </tbody></table>
+      </details>
+    </td></tr>
+    {% end %}
   {% end %}
   </tbody>
 </table>

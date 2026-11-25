@@ -1,4 +1,4 @@
-import Account, Folder, Page, PageRow, Revision, Release, SnapFolder, SnapPage, AuditEntry from "./Models.q"
+import Account, Folder, Page, PageRow, Revision, Release, SnapFolder, SnapPage, AuditEntry, AuditFilter from "./Models.q"
 
 type Row = map<string, Json>
 
@@ -379,9 +379,9 @@ impl Store
         self.exec("INSERT INTO audit_logs (user_id, action, entity_type, entity_id, summary, data, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", [opt(user_id), text(action), text(entity_type), opt(entity_id), text(summary), text(data.to_text()), num(self.now())])
     end
 
-    public fun audit(self, kind: string, limit: int, offset: int) -> array<AuditEntry>
-        let where = if kind == "" then "" else "WHERE a.entity_type = ?" end
-        let params: array<Json> = if kind == "" then [] else [text(kind)] end
+    public fun audit_search(self, f: AuditFilter, limit: int, offset: int) -> array<AuditEntry>
+        let params: array<Json> = []
+        let where = audit_where(f, params)
         params.push(num(limit))
         params.push(num(offset))
         let out: array<AuditEntry> = []
@@ -394,12 +394,49 @@ impl Store
         out
     end
 
-    public fun audit_count(self, kind: string) -> int
-        if kind == "" then
-            return col_int(self.rows("SELECT COUNT(*) AS n FROM audit_logs", [])[0], "n")
-        end
-        col_int(self.rows("SELECT COUNT(*) AS n FROM audit_logs WHERE entity_type = ?", [text(kind)])[0], "n")
+    public fun audit_total(self, f: AuditFilter) -> int
+        let params: array<Json> = []
+        let where = audit_where(f, params)
+        col_int(self.rows("SELECT COUNT(*) AS n FROM audit_logs a {where}", params)[0], "n")
     end
+
+    --" The actions that appear in the journal, to fill the filter. --"
+    public fun audit_actions(self) -> array<string>
+        self.rows("SELECT DISTINCT action FROM audit_logs ORDER BY action", []).map(fun(row: Row) -> string col_text(row, "action") end)
+    end
+
+    public fun audit(self, kind: string, limit: int, offset: int) -> array<AuditEntry>
+        self.audit_search(AuditFilter { kind: kind, user_id: none, action: "", since: none, until: none }, limit, offset)
+    end
+
+    public fun audit_count(self, kind: string) -> int
+        self.audit_total(AuditFilter { kind: kind, user_id: none, action: "", since: none, until: none })
+    end
+end
+
+fun audit_where(f: AuditFilter, params: array<Json>) -> string
+    let parts: array<string> = []
+    if f.kind != "" then
+        parts.push("a.entity_type = ?")
+        params.push(text(f.kind))
+    end
+    if f.user_id != none then
+        parts.push("a.user_id = ?")
+        params.push(num(f.user_id ?? 0))
+    end
+    if f.action != "" then
+        parts.push("a.action = ?")
+        params.push(text(f.action))
+    end
+    if f.since != none then
+        parts.push("a.created_at >= ?")
+        params.push(num(f.since ?? 0))
+    end
+    if f.until != none then
+        parts.push("a.created_at < ?")
+        params.push(num(f.until ?? 0))
+    end
+    if parts.is_empty() then "" else "WHERE " + parts.join(" AND ") end
 end
 
 export Store, Row, num, text, opt, col_int, col_opt, col_text

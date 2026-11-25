@@ -1,6 +1,7 @@
 import describe, it, expect, finish from "@test"
 import Docs, Change from "./Docs.q"
 import fresh_docs from "./TestSupport.q"
+import AuditFilter from "./Models.q"
 
 fun admin(docs: Docs) -> int
     docs.create_account("quentin", "a long enough password", "admin", none).unwrap()
@@ -101,6 +102,25 @@ fun test_suite()
             expect(log[0].data.contains("\"added\":2")).to_be(true)
             expect(log[0].data.contains("\"removed\":1")).to_be(true)
             expect(docs.store.audit_count("page")).to_be(2)
+        end)
+
+        it("narrows the log by author, action and dates", fun()
+            let docs = fresh_docs()
+            let me = admin(docs)
+            let id = docs.create_page("fr", none, "Log", "", "a", "edit", me).unwrap()
+            docs.edit_page(id, "Log", "b", "", "edit", me)
+            let none_filter = AuditFilter { kind: "", user_id: none, action: "", since: none, until: none }
+            let all = docs.store.audit_total(none_filter)
+            let edits = AuditFilter { kind: "", user_id: me, action: "page.edit", since: none, until: none }
+            expect(docs.store.audit_total(edits)).to_be(2)
+            let stranger = AuditFilter { kind: "", user_id: 999999, action: "", since: none, until: none }
+            expect(docs.store.audit_total(stranger)).to_be(0)
+            let future = AuditFilter { kind: "", user_id: none, action: "", since: 32503680000000, until: none }
+            expect(docs.store.audit_total(future)).to_be(0)
+            let past = AuditFilter { kind: "", user_id: none, action: "", since: none, until: 1000 }
+            expect(docs.store.audit_total(past)).to_be(0)
+            expect(all > 1).to_be(true)
+            expect(docs.store.audit_actions().contains("page.edit")).to_be(true)
         end)
     end)
 

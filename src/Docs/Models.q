@@ -98,4 +98,13 @@ struct AuditEntry
     public created_at: int
 end
 
-export Account, Folder, Page, PageRow, Revision, Release, SnapFolder, SnapPage, AuditEntry
+--" What the journal is narrowed to; an empty field means "no limit". Times are epoch milliseconds, `until` excluded. --"
+struct AuditFilter
+    public kind: string
+    public user_id: int?
+    public action: string
+    public since: int?
+    public until: int?
+end
+
+export AuditFilter, Account, Folder, Page, PageRow, Revision, Release, SnapFolder, SnapPage, AuditEntry

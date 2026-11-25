@@ -49,3 +49,5 @@ tr.line-add td { background:color-mix(in srgb, #16a34a 16%, var(--card)); } tr.l
   .toolbar > * { flex:0 0 auto; }
   textarea.editor { font-size:16px; } input, select, textarea { font-size:16px; }
 }
+.filters { display:flex; flex-wrap:wrap; gap:.6rem 1rem; align-items:end; margin:0 0 1rem; } .filters label { display:flex; flex-direction:column; gap:.2rem; font-size:.8rem; color:var(--muted); } .filters input, .filters select { font:inherit; font-size:.9rem; }
+@media (max-width:44rem) { .filters label { flex:1 1 40%; } .filters select, .filters input { width:100%; } }

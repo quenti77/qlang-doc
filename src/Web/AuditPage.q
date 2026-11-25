@@ -1,6 +1,7 @@
 import "@std/web/app.q" as web
 import Docs from "../Docs/Docs.q"
-import AuditEntry from "../Docs/Models.q"
+import AuditEntry, AuditFilter from "../Docs/Models.q"
+import action_label from "./Labels.q"
 import Views from "./Views.q"
 import render, session_of, when, int_of from "./Support.q"
 
@@ -10,6 +11,7 @@ struct AuditRow
     public at: string
     public user: string
     public action: string
+    public action_key: string
     public summary: string
     public stats: string
     public link: string
@@ -17,8 +19,21 @@ struct AuditRow
     public link_label: string
 end
 
+struct Choice
+    public value: string
+    public label: string
+    public selected: string
+end
+
 struct AuditData
     public rows: array<AuditRow>
+    public users: array<Choice>
+    public actions: array<Choice>
+    public since: string
+    public until: string
+    public query: string
+    public total: int
+    public filtered: bool
     public kind: string
     public kind_all: bool
     public kind_page: bool
@@ -33,6 +48,20 @@ struct AuditData
     public has_prev: bool
     public has_next: bool
     public csrf: string
+end
+
+--" Midnight (UTC) of a `YYYY-MM-DD` day, in milliseconds; none when the text is not a date. --"
+fun day_ms(text: string?) -> int?
+    if text == none or text.trim() == "" then
+        return none
+    end
+    let d = datetime.parse(text.trim())
+    if d == none then none else d.unix() * 1000 end
+end
+
+--" The end of a day given by its start: the next midnight. --"
+fun end_of(start: int?) -> int?
+    if start == none then none else start + 86400000 end
 end
 
 fun number_in(data: Json, key: string) -> int?
@@ -71,7 +100,7 @@ fun row_of(e: AuditEntry) -> AuditRow
     let stats = if added == none or removed == none then "" else "+{added} −{removed}" end
     let link = link_of(e, data)
     let label = if link.contains("/diff") then "voir le diff" elseif link == "" then "" else "ouvrir" end
-    AuditRow { at: when(e.created_at), user: if e.user == "" then "—" else e.user end, action: e.action, summary: e.summary, stats: stats, link: link, has_link: link != "", link_label: label }
+    AuditRow { at: when(e.created_at), user: if e.user == "" then "—" else e.user end, action: action_label(e.action), action_key: e.action, summary: e.summary, stats: stats, link: link, has_link: link != "", link_label: label }
 end
 
 --" The journal: who did what and when, with the size of each diff. --"
@@ -84,9 +113,13 @@ end
 
 impl AuditPage
     #[web.Get("/audit")]
-    public fun show(self, req: Request, #[web.Query] type: string?, #[web.Query] page: string?) -> Response
+    public fun show(self, req: Request, #[web.Query] type: string?, #[web.Query] page: string?, #[web.Query] user: string?, #[web.Query] action: string?, #[web.Query("from")] since: string?, #[web.Query("to")] until: string?) -> Response
         let kind = if ["page", "folder", "release", "account", "package"].contains(type ?? "") then type ?? "" else "" end
-        let total = self.docs.store.audit_count(kind)
+        let day_start = day_ms(since)
+        let day_end = day_ms(until)
+        let wanted_action = action ?? ""
+        let filter = AuditFilter { kind: kind, user_id: int_of(user), action: wanted_action, since: day_start, until: end_of(day_end) }
+        let total = self.docs.store.audit_total(filter)
         let pages = if total == 0 then 1 else (total + PER_PAGE - 1) // PER_PAGE end
         let current = int_of(page) ?? 1
         if current < 1 then
@@ -95,9 +128,22 @@ impl AuditPage
         if current > pages then
             current = pages
         end
-        let rows = self.docs.store.audit(kind, PER_PAGE, (current - 1) * PER_PAGE).map(fun(e: AuditEntry) -> AuditRow row_of(e) end)
+        let rows = self.docs.store.audit_search(filter, PER_PAGE, (current - 1) * PER_PAGE).map(fun(e: AuditEntry) -> AuditRow row_of(e) end)
+        let users: array<Choice> = [Choice { value: "", label: "Tout le monde", selected: "" }]
+        for a in self.docs.store.accounts() do
+            users.push(Choice { value: "{a.id}", label: a.login, selected: if filter.user_id == a.id then "selected" else "" end })
+        end
+        let actions: array<Choice> = [Choice { value: "", label: "Toutes les actions", selected: "" }]
+        for key in self.docs.store.audit_actions() do
+            actions.push(Choice { value: key, label: action_label(key), selected: if key == wanted_action then "selected" else "" end })
+        end
+        let since_text = if day_start == none then "" else (since ?? "") end
+        let until_text = if day_end == none then "" else (until ?? "") end
+        let query = "type={kind}&user={user ?? ""}&action={wanted_action}&from={since_text}&to={until_text}"
         let data = AuditData {
-            rows: rows, kind: kind, kind_all: kind == "", kind_page: kind == "page", kind_folder: kind == "folder", kind_release: kind == "release", kind_account: kind == "account", kind_package: kind == "package", page: current, pages: pages, prev: current - 1, next: current + 1,
+            rows: rows, users: users, actions: actions, since: since_text, until: until_text, query: query, total: total,
+            filtered: filter.user_id != none or wanted_action != "" or day_start != none or day_end != none,
+            kind: kind, kind_all: kind == "", kind_page: kind == "page", kind_folder: kind == "folder", kind_release: kind == "release", kind_account: kind == "account", kind_package: kind == "package", page: current, pages: pages, prev: current - 1, next: current + 1,
             has_prev: current > 1, has_next: current < pages, csrf: session_of(req).csrf_field(),
         }
         render(self.docs, self.views, req, "audit", "Journal", "audit", Json.of(data))

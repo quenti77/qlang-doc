@@ -9,6 +9,16 @@
     <a href="/admin/audit?type=account" {% if kind_account %}aria-current="page"{% end %}>Comptes</a>
   </div>
 </div>
+<form method="get" action="/admin/audit" class="filters">
+  <input type="hidden" name="type" value="{{ kind }}">
+  <label>Du <input type="date" name="from" value="{{ since }}"></label>
+  <label>au <input type="date" name="to" value="{{ until }}"></label>
+  <label>Par <select name="user">{% for u in users %}<option value="{{ u.value }}" {{ u.selected }}>{{ u.label }}</option>{% end %}</select></label>
+  <label>Action <select name="action">{% for a in actions %}<option value="{{ a.value }}" {{ a.selected }}>{{ a.label }}</option>{% end %}</select></label>
+  <button class="btn small" type="submit">Filtrer</button>
+  {% if filtered %}<a class="btn small" href="/admin/audit?type={{ kind }}">Réinitialiser</a>{% end %}
+  <span class="muted">{{ total }} entrée(s)</span>
+</form>
 <table class="list">
   <thead><tr><th>Quand</th><th>Qui</th><th>Action</th><th>Détail</th><th></th></tr></thead>
   <tbody>
@@ -16,7 +26,7 @@
     <tr>
       <td class="nowrap muted">{{ r.at }}</td>
       <td>{{ r.user }}</td>
-      <td><code>{{ r.action }}</code></td>
+      <td><strong>{{ r.action }}</strong><br><code class="muted">{{ r.action_key }}</code></td>
       <td>{{ r.summary }} {% if r.stats %}<span class="muted">({{ r.stats }})</span>{% end %}</td>
       <td class="right">{% if r.has_link %}<a class="btn small" href="{{ r.link }}">{{ r.link_label }}</a>{% end %}</td>
     </tr>
@@ -26,7 +36,7 @@
   </tbody>
 </table>
 <p class="pager">
-  {% if has_prev %}<a class="btn small" href="/admin/audit?type={{ kind }}&page={{ prev }}">← Plus récent</a>{% end %}
+  {% if has_prev %}<a class="btn small" href="/admin/audit?{{ query }}&page={{ prev }}">← Plus récent</a>{% end %}
   <span class="muted">page {{ page }} / {{ pages }}</span>
-  {% if has_next %}<a class="btn small" href="/admin/audit?type={{ kind }}&page={{ next }}">Plus ancien →</a>{% end %}
+  {% if has_next %}<a class="btn small" href="/admin/audit?{{ query }}&page={{ next }}">Plus ancien →</a>{% end %}
 </p>

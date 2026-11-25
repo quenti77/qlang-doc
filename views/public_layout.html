@@ -23,6 +23,16 @@
   </details>
   {% end %}
   <a class="lang" href="{{ other_url }}">{{ other_locale | upper }}</a>
+  <span class="account">
+  {% if viewer.signed_in %}
+    <span class="who muted">{{ viewer.login }}</span>
+    {% if viewer.staff %}<a class="btn small" href="/admin">Admin</a>{% end %}
+    <form method="post" action="/account/logout" class="inline">{{ viewer.csrf | raw }}<button class="link" type="submit">Déconnexion</button></form>
+  {% else %}
+    <a href="/account/login">Connexion</a>
+    {% if viewer.signup_open %}<a class="btn small" href="/account/register">Inscription</a>{% end %}
+  {% end %}
+  </span>
   <span class="theme" role="group" aria-label="Thème"><button type="button" data-theme-set="light">Clair</button><button type="button" data-theme-set="dark">Sombre</button><button type="button" data-theme-set="system">Auto</button></span>
 </div></header>
 {{ content | raw }}

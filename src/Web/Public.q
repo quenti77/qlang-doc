@@ -2,6 +2,7 @@ import Docs, LOCALES from "../Docs/Docs.q"
 import Release, SnapFolder, SnapPage from "../Docs/Models.q"
 import Section from "../Docs/Models.q"
 import links from "./Sections.q"
+import viewer_of from "./Viewer.q"
 import Views from "./Views.q"
 import highlight from "../Markup/Highlight.q"
 
@@ -164,14 +165,15 @@ end
 struct Public
     docs: Docs
     views: Views
+    signup_open: bool
 end
 
 impl Public
-    public fun new(docs: Docs, views: Views) -> Public
-        Public { docs: docs, views: views }
+    public fun new(docs: Docs, views: Views, signup_open: bool) -> Public
+        Public { docs: docs, views: views, signup_open: signup_open }
     end
 
-    fun shell(self, locale: string, title: string, release: Release?, current_path: string) -> map<string, Json>
+    fun shell(self, req: Request, locale: string, title: string, release: Release?, current_path: string) -> map<string, Json>
         let versions: array<VersionLink> = []
         let first = self.docs.default_section()
         for r in self.docs.store.releases() do
@@ -191,17 +193,18 @@ impl Public
             "sections": Json.of(links(self.docs, locale)),
             "other_url": Json.string("/{if locale == "fr" then "en" else "fr" end}/{first}"),
             "search_url": Json.string("/{locale}/search"),
+            "viewer": Json.of(viewer_of(self.docs, req, self.signup_open)),
         }
         shell
     end
 
-    fun message(self, locale: string, title: string, text: string, status: int) -> Response
-        let shell = self.shell(locale, title, none, "")
+    fun message(self, req: Request, locale: string, title: string, text: string, status: int) -> Response
+        let shell = self.shell(req, locale, title, none, "")
         self.views.public_page("public_message", shell, Json.of(MessageData { title: title, text: text })).with_status(status)
     end
 
     public fun home(self, req: Request) -> Response
-        let shell = self.shell("fr", "qlang", none, "")
+        let shell = self.shell(req, "fr", "qlang", none, "")
         shell["sample"] = Json.string(highlight(SAMPLE))
         self.views.public_page("public_home", shell, Json.object({ "sample": Json.string(highlight(SAMPLE)), "docs_url": Json.string("/fr/{self.docs.default_section()}") }))
     end
@@ -228,13 +231,13 @@ impl Public
         if segments.len() == 1 and segments[0] == "docs" then
             return Response.redirect("/fr/{self.docs.default_section()}")
         end
-        self.message("fr", "Page introuvable", "Cette page n'existe pas.", 404)
+        self.message(req, "fr", "Page introuvable", "Cette page n'existe pas.", 404)
     end
 
     fun page(self, req: Request, locale: string, area: string, path: string) -> Response
         let release = self.resolve(req)
         if release == none then
-            return self.message(locale, "Documentation", "La documentation n'est pas encore publiée.", 404)
+            return self.message(req, locale, "Documentation", "La documentation n'est pas encore publiée.", 404)
         end
         let explicit = req.query["v"]
         let suffix = if explicit == none then "" else "?v={explicit}" end
@@ -249,7 +252,7 @@ impl Public
         let seq: array<SnapPage> = []
         ordered(folders, pages, "", nav, seq, path, base, suffix)
         if seq.is_empty() then
-            return self.message(locale, strings_of(locale).docs, "Cette section n'a pas de pages dans cette langue pour cette version.", 404)
+            return self.message(req, locale, strings_of(locale).docs, "Cette section n'a pas de pages dans cette langue pour cette version.", 404)
         end
         let found = seq.filter(fun(p: SnapPage) -> bool p.path == path end)
         if found.is_empty() then
@@ -257,7 +260,7 @@ impl Public
             if not inside.is_empty() then
                 return Response.redirect("{base}/{inside[0].path}{suffix}")
             end
-            return self.message(locale, "Page introuvable", "Cette page n'existe pas dans cette version.", 404)
+            return self.message(req, locale, "Page introuvable", "Cette page n'existe pas dans cette version.", 404)
         end
         let page = found[0]
         let at = seq.index_of(page) ?? 0
@@ -291,7 +294,7 @@ impl Public
             has_next: at + 1 < seq.len(), next_url: if at + 1 < seq.len() then "{base}/{seq[at + 1].path}{suffix}" else "" end, next_title: if at + 1 < seq.len() then seq[at + 1].title else "" end,
             t: strings_of(locale),
         }
-        let shell = self.shell(locale, page.title, release, path)
+        let shell = self.shell(req, locale, page.title, release, path)
         shell["other_url"] = Json.string("/{if locale == "fr" then "en" else "fr" end}/{area}")
         self.views.public_page("public_page", shell, Json.of(data))
     end
@@ -310,7 +313,7 @@ impl Public
             end
         end
         let data = SearchData { query: query, hits: hits, has_hits: not hits.is_empty(), count: hits.len(), searched: query.len() >= 2, t: strings_of(locale) }
-        let shell = self.shell(locale, strings_of(locale).search, release, "")
+        let shell = self.shell(req, locale, strings_of(locale).search, release, "")
         shell["query"] = Json.string(query)
         self.views.public_page("public_search", shell, Json.of(data))
     end

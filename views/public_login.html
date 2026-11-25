@@ -1,0 +1,11 @@
+<main class="wrap narrow">
+  <h1>Connexion</h1>
+  {% if has_error %}<div class="flash flash-error">{{ error }}</div>{% end %}
+  <form method="post" action="/account/login" class="stack">
+    {{ csrf | raw }}
+    <label>Identifiant <input name="login" value="{{ login }}" autocomplete="username" required autofocus></label>
+    <label>Mot de passe <input name="password" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary" type="submit">Se connecter</button>
+  </form>
+  {% if open %}<p class="muted">Pas encore de compte ? <a href="/account/register">Inscris-toi</a>.</p>{% end %}
+</main>

@@ -132,7 +132,7 @@ impl Docs
         if password.len() < 12 then
             return Err("Le mot de passe doit faire au moins 12 caractères.")
         end
-        if role != "admin" and role != "editor" then
+        if role != "admin" and role != "editor" and role != "member" then
             return Err("Rôle inconnu.")
         end
         if self.store.account_by_login(login.trim()) != none then

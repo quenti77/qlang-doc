@@ -19,6 +19,7 @@ import "../Web/ReleasePage.q" as release_page
 import "../Web/AuditPage.q" as audit_page
 import "../Web/AccountPage.q" as account_page
 import "../Web/PackageAdminPage.q" as package_admin_page
+import MemberPage from "../Web/MemberPage.q"
 
 --" The guard of the panel: whoever has no signed session, or whose account is gone, goes to the login page. --"
 fun auth_guard(docs: Docs) -> fun(Request) -> Response?
@@ -30,6 +31,9 @@ fun auth_guard(docs: Docs) -> fun(Request) -> Response?
         if account == none then
             session.clear()
             return Response.redirect("/admin/login")
+        end
+        if account.role == "member" then
+            return Response.redirect("/")
         end
         none
     end
@@ -82,17 +86,25 @@ fun build(db: Db, config: Config) -> web.App
         panic(views.unwrap_err().message)
     end
     let docs = Docs.new(Store.new(db))
-    let site = Public.new(docs, views.unwrap())
+    let site = Public.new(docs, views.unwrap(), config.signup_open)
     let registry = Registry.new(docs.store, Options { submissions_open: config.submissions_open, hosts: config.git_hosts })
-    let packages = PackagePages.new(docs, views.unwrap(), registry, config.base_url)
+    let packages = PackagePages.new(docs, views.unwrap(), registry, config.base_url, config.signup_open)
+    let members = MemberPage.new(docs, views.unwrap(), config.signup_open)
     let app = web.App.new([])
     app.use(sessions.sessions_using(config.session_secret, sessions.Options {
         secure: config.secure_cookies, lifetime: 28800, same_site: "Lax", store: none, prefix: "doc",
     }))
     app.use(sessions.csrf_protect_except(["/hooks/"]))
     let limiter = limit.rate_limit(cc.Cache.memory(), 5, 3600, fun(req: Request) -> string req.header("x-forwarded-for") ?? req.remote_addr end)
+    let sign_in_limiter = limit.rate_limit(cc.Cache.memory(), 20, 900, fun(req: Request) -> string req.header("x-forwarded-for") ?? req.remote_addr end)
     app.use(fun(req: Request, next: web.Handler) -> Response
-        if req.method == "POST" and req.path == "/packages/submit" then limiter(req, next) else next(req) end
+        if req.method != "POST" then
+            return next(req)
+        end
+        if req.path == "/packages/submit" or req.path == "/account/register" then
+            return limiter(req, next)
+        end
+        if req.path == "/account/login" then sign_in_limiter(req, next) else next(req) end
     end)
     app.container.set(docs)
     app.container.set(views.unwrap())
@@ -118,6 +130,11 @@ fun build(db: Db, config: Config) -> web.App
     app.get("/packages/submit", fun(req: Request) -> Response packages.submit_form(req) end)
     app.post("/packages/submit", fun(req: Request) -> Response packages.submit(req) end)
     app.get("/packages/:name", fun(req: Request) -> Response packages.show(req, req.params.get("name", "")) end)
+    app.get("/account/login", fun(req: Request) -> Response members.login_form(req) end)
+    app.post("/account/login", fun(req: Request) -> Response members.login(req) end)
+    app.get("/account/register", fun(req: Request) -> Response members.register_form(req) end)
+    app.post("/account/register", fun(req: Request) -> Response members.register(req) end)
+    app.post("/account/logout", fun(req: Request) -> Response members.logout(req) end)
     app.post("/hooks/git", hook_handler(registry, config.hook_secret))
     app.not_found(fun(req: Request) -> Response site.handle(req) end)
     let problems = app.validate()

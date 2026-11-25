@@ -2,7 +2,7 @@ import "@std/web/session.q" as sessions
 import Docs from "../Docs/Docs.q"
 import Package, PackageVersion from "../Registry/Models.q"
 import Registry from "../Registry/Registry.q"
-import links from "./Sections.q"
+import base_shell from "./Viewer.q"
 import Views from "./Views.q"
 import when from "./Support.q"
 
@@ -84,28 +84,16 @@ struct PackagePages
     views: Views
     registry: Registry
     base_url: string
+    signup_open: bool
 end
 
 impl PackagePages
-    public fun new(docs: Docs, views: Views, registry: Registry, base_url: string) -> PackagePages
-        PackagePages { docs: docs, views: views, registry: registry, base_url: base_url }
+    public fun new(docs: Docs, views: Views, registry: Registry, base_url: string, signup_open: bool) -> PackagePages
+        PackagePages { docs: docs, views: views, registry: registry, base_url: base_url, signup_open: signup_open }
     end
 
-    fun shell(self, title: string) -> map<string, Json>
-        {
-            "title": Json.string(title),
-            "locale": Json.string("fr"),
-            "other_locale": Json.string("en"),
-            "label": Json.string(""),
-            "versions": Json.array([]),
-            "has_versions": Json.of(false),
-            "query": Json.string(""),
-            "t": Json.of({ "docs": "Documentation", "packages": "Paquets", "playground": "Playground", "search": "Rechercher dans la doc" }),
-            "docs_url": Json.string("/fr/{self.docs.default_section()}"),
-            "sections": Json.of(links(self.docs, "fr")),
-            "other_url": Json.string("/en/{self.docs.default_section()}"),
-            "search_url": Json.string("/fr/search"),
-        }
+    fun shell(self, req: Request, title: string) -> map<string, Json>
+        base_shell(self.docs, req, self.signup_open, title)
     end
 
     --" `/packages.json`: the index, in the format of `qlang search` and `qlang add`. --"
@@ -123,7 +111,7 @@ impl PackagePages
             "labels_examples": "Exemples", "labels_share": "Partager", "labels_reset": "Réinitialiser", "labels_input": "Entrée (une ligne par read())",
             "labels_run": "Exécuter", "labels_output": "Sortie", "labels_json": Json.of(labels).to_text(),
         }
-        self.views.public_page("public_playground", self.shell("Playground"), Json.of(data))
+        self.views.public_page("public_playground", self.shell(req, "Playground"), Json.of(data))
     end
 
     public fun list(self, req: Request) -> Response
@@ -151,7 +139,7 @@ impl PackagePages
             query: words, keyword: keyword, rows: found.map(fun(p: Package) -> PackageRow row_of(p) end), has_rows: not found.is_empty(), count: found.len(),
             keywords: keywords, can_submit: self.registry.options.submissions_open, index_url: "{self.base_url}/packages.json",
         }
-        let shell = self.shell("Paquets")
+        let shell = self.shell(req, "Paquets")
         shell["query"] = Json.string(words)
         shell["search_url"] = Json.string("/packages")
         self.views.public_page("public_packages", shell, Json.of(data))
@@ -160,7 +148,7 @@ impl PackagePages
     public fun show(self, req: Request, name: string) -> Response
         let p = self.registry.packages.package_by_name(name)
         if p == none or p.status == "pending" then
-            return self.views.public_page("public_message", self.shell("Paquet introuvable"), Json.of({ "title": "Paquet introuvable", "text": "Ce paquet n'est pas dans le registre." })).with_status(404)
+            return self.views.public_page("public_message", self.shell(req, "Paquet introuvable"), Json.of({ "title": "Paquet introuvable", "text": "Ce paquet n'est pas dans le registre." })).with_status(404)
         end
         let versions = self.registry.versions(p.id).map(fun(v: PackageVersion) -> VersionRow
             VersionRow { version: v.version, yanked: v.yanked, qlang_req: v.qlang_req, has_req: v.qlang_req != "", seen: when(v.first_seen) }
@@ -172,7 +160,7 @@ impl PackagePages
             synced: if p.synced_at > 0 then when(p.synced_at) else "" end, install: "qlang add {p.name}",
             pinned: "{p.name} = \{ git = \"{p.git_url}\", version = \"^{(p.latest_version.strip_prefix("v") ?? "1.0.0")}\" \}",
         }
-        self.views.public_page("public_package", self.shell(p.name), Json.of(data))
+        self.views.public_page("public_package", self.shell(req, p.name), Json.of(data))
     end
 
     public fun submit_form(self, req: Request) -> Response
@@ -183,7 +171,7 @@ impl PackagePages
             open: self.registry.options.submissions_open, name: session.old("name") ?? "", git: session.old("git") ?? "", hosts: self.registry.options.hosts.join(", "),
             csrf: session.csrf_field(), sent: held == "sent", error: error, has_error: error != "",
         }
-        self.views.public_page("public_submit", self.shell("Proposer un paquet"), Json.of(data))
+        self.views.public_page("public_submit", self.shell(req, "Proposer un paquet"), Json.of(data))
     end
 
     public fun submit(self, req: Request) -> Response

@@ -10,7 +10,7 @@ import build from "./Web.q"
 let PASSWORD = "a long enough password"
 
 fun config(open: bool) -> Config
-    Config { database_url: "", session_secret: "test-session-secret-of-at-least-32-chars", secure_cookies: false, submissions_open: open, views_dir: "views", git_hosts: ["github.com"], hook_secret: "hook-secret", base_url: "https://docs.example.org" }
+    Config { database_url: "", session_secret: "test-session-secret-of-at-least-32-chars", secure_cookies: false, submissions_open: open, signup_open: true, views_dir: "views", git_hosts: ["github.com"], hook_secret: "hook-secret", base_url: "https://docs.example.org" }
 end
 
 struct Site
@@ -81,6 +81,39 @@ fun test_suite()
             s.client.get("/admin/docs").expect_status(200)
             post(s.client, "/admin/releases", "/admin/releases", { "label": "1.0.0" }).expect_status(403)
             s.client.get("/admin/accounts").expect_status(403)
+        end)
+    end)
+
+    describe("public accounts", fun()
+        it("signs a member up, who gets no panel and no Admin button", fun()
+            let s = site()
+            let t = token(s.client, "/account/register")
+            s.client.post_form("/account/register", { "_csrf": t, "login": "reader", "password": PASSWORD, "password2": PASSWORD }).expect_status(302)
+            s.client.get("/").expect_status(200).expect_body_contains("reader")
+            expect(s.client.get("/").body.contains("href=\"/admin\"")).to_be(false)
+            expect(s.client.get("/admin").header("location")).to_be("/")
+            expect(s.docs.store.account_by_login("reader").unwrap().role).to_be("member")
+        end)
+
+        it("refuses a bad sign-up", fun()
+            let s = site()
+            let t = token(s.client, "/account/register")
+            s.client.post_form("/account/register", { "_csrf": t, "login": "reader", "password": PASSWORD, "password2": "another long password" }).expect_status(422)
+            s.client.post_form("/account/register", { "_csrf": t, "login": "boss", "password": PASSWORD, "password2": PASSWORD }).expect_status(422).expect_body_contains("existe déjà")
+        end)
+
+        it("shows the Admin button to the staff only", fun()
+            let s = site()
+            expect(s.client.get("/").body.contains("href=\"/admin\"")).to_be(false)
+            let t = token(s.client, "/account/login")
+            s.client.post_form("/account/login", { "_csrf": t, "login": "boss", "password": PASSWORD }).expect_status(302)
+            s.client.get("/").expect_status(200).expect_body_contains("href=\"/admin\"")
+        end)
+
+        it("refuses a wrong password", fun()
+            let s = site()
+            let t = token(s.client, "/account/login")
+            s.client.post_form("/account/login", { "_csrf": t, "login": "boss", "password": "wrong password!!" }).expect_status(401)
         end)
     end)
 

@@ -21,27 +21,28 @@ let SECTIONS = [
     Section { slug: "contribuer", title: "Contribuer", position: 0 },
 ]
 
+struct Rule
+    public low: int
+    public high: int
+    public target: Target
+end
+
+let RULES = [
+    Rule { low: 0, high: 2, target: Target { section: "docs", folder: "prise-en-main", fr: "Prise en main", en: "Getting started" } },
+    Rule { low: 10, high: 22, target: Target { section: "docs", folder: "le-langage", fr: "Le langage", en: "The language" } },
+    Rule { low: 23, high: 32, target: Target { section: "ref", folder: "langage", fr: "Langage", en: "Language" } },
+    Rule { low: 40, high: 41, target: Target { section: "contribuer", folder: "developpement", fr: "Développement", en: "Development" } },
+    Rule { low: 50, high: 60, target: Target { section: "std", folder: "modules", fr: "Modules", en: "Modules" } },
+    Rule { low: 61, high: 88, target: Target { section: "web", folder: "modules-web", fr: "Modules web", en: "Web modules" } },
+    Rule { low: 89, high: 90, target: Target { section: "std", folder: "modules", fr: "Modules", en: "Modules" } },
+    Rule { low: 100, high: 203, target: Target { section: "ref", folder: "types-et-fonctions", fr: "Types et fonctions", en: "Types and functions" } },
+]
+
 fun target_for(n: int) -> Target?
-    if n <= 2 then
-        return Target { section: "docs", folder: "prise-en-main", fr: "Prise en main", en: "Getting started" }
-    end
-    if n >= 10 and n <= 22 then
-        return Target { section: "docs", folder: "le-langage", fr: "Le langage", en: "The language" }
-    end
-    if n >= 23 and n <= 32 then
-        return Target { section: "ref", folder: "langage", fr: "Langage", en: "Language" }
-    end
-    if n >= 40 and n <= 41 then
-        return Target { section: "contribuer", folder: "developpement", fr: "Développement", en: "Development" }
-    end
-    if n >= 50 and n <= 60 or n == 89 or n == 90 then
-        return Target { section: "std", folder: "modules", fr: "Modules", en: "Modules" }
-    end
-    if n >= 61 and n <= 88 then
-        return Target { section: "web", folder: "modules-web", fr: "Modules web", en: "Web modules" }
-    end
-    if n >= 100 and n <= 203 then
-        return Target { section: "ref", folder: "types-et-fonctions", fr: "Types et fonctions", en: "Types and functions" }
+    for rule in RULES do
+        if n >= rule.low and n <= rule.high then
+            return rule.target
+        end
     end
     none
 end

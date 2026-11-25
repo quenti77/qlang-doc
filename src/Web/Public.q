@@ -168,6 +168,42 @@ struct Public
     signup_open: bool
 end
 
+--" The entries of the table of contents of a page: its second and third level headings. --"
+fun toc_of(raw: string) -> array<TocItem>
+    let toc: array<TocItem> = []
+    let parsed = Json.parse(raw)
+    if parsed.is_err() then
+        return toc
+    end
+    let headings = Json.to<array<Heading>>(parsed.unwrap())
+    if headings.is_err() then
+        return toc
+    end
+    for h in headings.unwrap() do
+        if h.level == 2 or h.level == 3 then
+            toc.push(TocItem { id: h.id, text: h.text, style: if h.level == 3 then "padding-left:1rem" else "" end })
+        end
+    end
+    toc
+end
+
+--" The titles of the folders that contain a page, from the outermost. --"
+fun crumbs_of(path: string, folders: array<SnapFolder>) -> array<string>
+    let crumbs: array<string> = []
+    let parts = path.split("/")
+    let k = 0
+    while k < parts.len() - 1 do
+        let prefix = parts.slice(0, k + 1).join("/")
+        for f in folders do
+            if f.path == prefix then
+                crumbs.push(f.title)
+            end
+        end
+        k = k + 1
+    end
+    crumbs
+end
+
 impl Public
     public fun new(docs: Docs, views: Views, signup_open: bool) -> Public
         Public { docs: docs, views: views, signup_open: signup_open }
@@ -264,30 +300,8 @@ impl Public
         end
         let page = found[0]
         let at = seq.index_of(page) ?? 0
-        let toc: array<TocItem> = []
-        let parsed = Json.parse(page.toc)
-        if parsed.is_ok() then
-            let headings = Json.to<array<Heading>>(parsed.unwrap())
-            if headings.is_ok() then
-                for h in headings.unwrap() do
-                    if h.level == 2 or h.level == 3 then
-                        toc.push(TocItem { id: h.id, text: h.text, style: if h.level == 3 then "padding-left:1rem" else "" end })
-                    end
-                end
-            end
-        end
-        let crumbs: array<string> = []
-        let parts = path.split("/")
-        let k = 0
-        while k < parts.len() - 1 do
-            let prefix = parts.slice(0, k + 1).join("/")
-            for f in folders do
-                if f.path == prefix then
-                    crumbs.push(f.title)
-                end
-            end
-            k = k + 1
-        end
+        let toc = toc_of(page.toc)
+        let crumbs = crumbs_of(path, folders)
         let data = PageData {
             title: page.title, html: page.html, nav: nav, toc: toc, has_toc: toc.len() > 1, crumbs: crumbs.join(" › "), has_crumbs: not crumbs.is_empty(),
             has_prev: at > 0, prev_url: if at > 0 then "{base}/{seq[at - 1].path}{suffix}" else "" end, prev_title: if at > 0 then seq[at - 1].title else "" end,

@@ -23,6 +23,7 @@ serve: seed
 	qlang serve main.q --bind $(DOC_BIND) --port $(DOC_PORT) --static public --dev --watch
 
 test-db: db
+	@until docker compose exec -T db pg_isready -q -U qlang_doc -d qlang_doc -h 127.0.0.1; do sleep 1; done
 	@docker compose exec -T db psql -U qlang_doc -d qlang_doc -tc "SELECT 1 FROM pg_database WHERE datname = 'qlang_doc_test'" | grep -q 1 || docker compose exec -T db createdb -U qlang_doc qlang_doc_test
 
 test: test-db

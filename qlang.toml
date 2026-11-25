@@ -2,7 +2,7 @@
 name = "qlang-doc"
 version = "0.1.0"
 entry = "main.q"
-qlang = "1.11"
+qlang = "1.12"
 
 [dependencies]
 std = { git = "https://github.com/quenti77/qlang-std", version = "^1.2" }

@@ -17,6 +17,7 @@ struct TreeRow
     public revision: int
     public updated: string
     public is_root: bool
+    public pick: string
     public sections: array<SectionOption>
 end
 
@@ -83,7 +84,7 @@ impl TreePage
             let root = i.kind == "folder" and i.depth == 0
             TreeRow {
                 is_folder: i.kind == "folder", id: i.id, title: i.title, slug: i.slug, path: i.path, style: "padding-left:{i.depth * 1.5 + 0.75}rem", revision: i.revision, updated: when(i.updated_at),
-                is_root: root, sections: options_of(all, chosen, lang),
+                is_root: root, pick: "{if i.kind == "folder" then "f" else "p" end}{i.id}", sections: options_of(all, chosen, lang),
             }
         end)
         let data = TreeData {
@@ -115,6 +116,75 @@ impl TreePage
             self.docs.set_section(made.unwrap(), form["section"] ?? "", uid_of(req))
         end
         self.done(req, Ok(true), "Dossier créé.", locale)
+    end
+
+    #[web.Post("/bulk-move")]
+    public fun bulk_move(self, req: Request) -> Response
+        let all = req.form_all()
+        let form: map<string, array<string>> = if all.is_ok() then all.unwrap() else {} end
+        let one = fun(key: string) -> string
+            let v = form[key]
+            if v == none or v.is_empty() then "" else v[0] end
+        end
+        let locale = locale_of(one("locale"))
+        let target = int_of(one("to"))
+        let section = one("section")
+        let picks = form["pick"] ?? []
+        let folders = self.docs.store.folders(locale)
+        let parents: map<int, int> = {}
+        for f in folders do
+            parents[f.id] = f.parent_id ?? 0
+        end
+        let picked: map<int, bool> = {}
+        for p in picks do
+            if p.starts_with("f") then
+                picked[(p.substring(1, p.len()).to_int() ?? 0)] = true
+            end
+        end
+        let moved = 0
+        let problems: array<string> = []
+        let actor = uid_of(req)
+        for p in picks do
+            let id = p.substring(1, p.len()).to_int() ?? 0
+            let held = self.docs.store.page(id)
+            let holder = if p.starts_with("f") then parents[id] ?? 0 elseif held == none then 0 else held.folder_id ?? 0 end
+            if self.under_picked(holder, parents, picked) then
+                continue
+            end
+            let done: Result<bool, string> = if p.starts_with("f") then self.docs.move_folder(id, target, actor) else self.docs.move_page(id, target, actor) end
+            if done.is_err() then
+                problems.push(done.unwrap_err())
+            else
+                moved += 1
+                if p.starts_with("f") and target == none and section != "" then
+                    self.docs.set_section(id, section, actor)
+                end
+            end
+        end
+        if moved > 0 then
+            ok(req, "{moved} élément(s) déplacé(s).")
+        end
+        if not problems.is_empty() then
+            fail(req, "{problems.len()} refusé(s) : {problems[0]}")
+        end
+        if moved == 0 and problems.is_empty() then
+            fail(req, "Rien n'est sélectionné.")
+        end
+        back(req, "/admin/docs?locale={locale}&section={section}")
+    end
+
+    --" True when a folder above `holder` (0 for the top) is picked too: it moves along with its content, so the content is left alone. --"
+    fun under_picked(self, holder: int, parents: map<int, int>, picked: map<int, bool>) -> bool
+        let current = holder
+        let guard = 0
+        while current != 0 and guard < 50 do
+            if picked[current] == true then
+                return true
+            end
+            current = parents[current] ?? 0
+            guard += 1
+        end
+        false
     end
 
     #[web.Post("/sections")]

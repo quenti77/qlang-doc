@@ -12,6 +12,24 @@
     document.querySelectorAll('tr[data-in="' + button.dataset.group + '"]').forEach(function (row) { row.hidden = !open; });
   });
 
+  var picks = function () { return Array.prototype.slice.call(document.querySelectorAll('input[name="pick"]')); };
+  var counter = function () {
+    var count = document.getElementById("bulk-count");
+    if (count) count.textContent = picks().filter(function (c) { return c.checked; }).length;
+  };
+  document.addEventListener("change", function (event) {
+    var box = event.target;
+    if (!box.matches) return;
+    if (box.id === "pick-all") {
+      picks().forEach(function (c) { c.checked = box.checked; });
+    } else if (box.matches('input[name="pick"][data-folder]')) {
+      picks().forEach(function (c) { if (c.dataset.path.indexOf(box.dataset.path + "/") === 0) c.checked = box.checked; });
+    } else {
+      return;
+    }
+    counter();
+  });
+
   var source = document.getElementById("markdown");
   var preview = document.getElementById("preview");
   if (!source || !preview) return;

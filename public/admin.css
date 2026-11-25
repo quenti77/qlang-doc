@@ -56,3 +56,4 @@ tr[hidden] { display:none; }
 tr.marker td { background:var(--card); }
 tr.changes > td { padding-top:0; }
 .tabs.sections { display:flex; flex-wrap:wrap; align-items:center; margin:0 0 1rem; } .tabs.sections summary { padding:.35rem .8rem; cursor:pointer; color:var(--muted); font-size:.9rem; list-style:none; } .tabs.sections .pop { position:relative; }
+.bulk { display:flex; flex-wrap:wrap; gap:.6rem 1rem; align-items:end; margin:0 0 .8rem; } .bulk label { display:flex; flex-direction:column; gap:.2rem; font-size:.8rem; color:var(--muted); }

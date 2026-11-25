@@ -58,13 +58,25 @@
 {% if empty %}
 <p class="muted">Rien dans « {{ section_title }} » en {{ locale }}. Crée un dossier, une page, ou importe des fichiers Markdown.</p>
 {% else %}
+<form id="bulk" method="post" action="/admin/bulk-move" class="bulk">
+  {{ csrf | raw }}
+  <input type="hidden" name="locale" value="{{ locale }}">
+  <input type="hidden" name="section" value="{{ section }}">
+  <input type="hidden" name="return" value="{{ section_url }}">
+  <span class="muted"><span id="bulk-count">0</span> sélectionné(s)</span>
+  <label>Déplacer dans
+    <select name="to">{% for f in folders %}<option value="{{ f.value }}">{{ f.label }}</option>{% end %}</select>
+  </label>
+  <button class="btn small" type="submit">Déplacer la sélection</button>
+  <span class="muted">« (racine) » met les dossiers à la racine de « {{ section_title }} ».</span>
+</form>
 <table class="list tree">
-  <thead><tr><th>Titre</th><th>Adresse</th><th>Modifiée</th><th class="right">Actions</th></tr></thead>
+  <thead><tr><th><input type="checkbox" id="pick-all" aria-label="Tout sélectionner"> Titre</th><th>Adresse</th><th>Modifiée</th><th class="right">Actions</th></tr></thead>
   <tbody>
   {% for r in rows %}
     {% if r.is_folder %}
     <tr class="folder">
-      <td style="{{ r.style }}"><strong>📁 {{ r.title }}</strong></td>
+      <td style="{{ r.style }}"><input type="checkbox" form="bulk" name="pick" value="{{ r.pick }}" data-path="{{ r.path }}" data-folder="1"> <strong>📁 {{ r.title }}</strong></td>
       <td class="muted">/{{ r.path }}</td>
       <td></td>
       <td class="right actions">
@@ -104,7 +116,7 @@
     </tr>
     {% else %}
     <tr>
-      <td style="{{ r.style }}"><a href="/admin/pages/{{ r.id }}">📄 {{ r.title }}</a></td>
+      <td style="{{ r.style }}"><input type="checkbox" form="bulk" name="pick" value="{{ r.pick }}" data-path="{{ r.path }}"> <a href="/admin/pages/{{ r.id }}">📄 {{ r.title }}</a></td>
       <td class="muted">/{{ r.path }}</td>
       <td class="muted nowrap">{{ r.updated }} · rév. {{ r.revision }}</td>
       <td class="right actions">

@@ -15,6 +15,10 @@ struct TreeRow
     public style: string
     public revision: int
     public updated: string
+    public is_root: bool
+    public section_label: string
+    public sel_doc: string
+    public sel_ref: string
 end
 
 struct TreeData
@@ -40,9 +44,18 @@ impl TreePage
     #[web.Get("/docs")]
     public fun show(self, req: Request, #[web.Query] locale: string?) -> Response
         let lang = locale_of(locale)
+        let sections: map<int, string> = {}
+        for f in self.docs.store.folders(lang) do
+            sections[f.id] = f.section
+        end
         let items = flatten(self.docs.store.folders(lang), self.docs.store.page_rows(lang))
         let rows = items.map(fun(i: Item) -> TreeRow
-            TreeRow { is_folder: i.kind == "folder", id: i.id, title: i.title, slug: i.slug, path: i.path, style: "padding-left:{i.depth * 1.5 + 0.75}rem", revision: i.revision, updated: when(i.updated_at) }
+            let section = sections[i.id] ?? "doc"
+            let root = i.kind == "folder" and i.depth == 0
+            TreeRow {
+                is_folder: i.kind == "folder", id: i.id, title: i.title, slug: i.slug, path: i.path, style: "padding-left:{i.depth * 1.5 + 0.75}rem", revision: i.revision, updated: when(i.updated_at),
+                is_root: root, section_label: if section == "ref" then "Référence" else "Documentation" end, sel_doc: if section == "doc" then "selected" else "" end, sel_ref: if section == "ref" then "selected" else "" end,
+            }
         end)
         let data = TreeData {
             locale: lang, is_fr: lang == "fr", is_en: lang == "en", other: if lang == "fr" then "en" else "fr" end, rows: rows, empty: rows.is_empty(),
@@ -68,7 +81,17 @@ impl TreePage
         if made.is_err() then
             return self.done(req, Err(made.unwrap_err()), "", locale)
         end
+        if int_of(form["parent"]) == none and (form["section"] ?? "") != "" then
+            self.docs.set_section(made.unwrap(), form["section"] ?? "doc", uid_of(req))
+        end
         self.done(req, Ok(true), "Dossier créé.", locale)
+    end
+
+    #[web.Post("/folders/:id/section")]
+    public fun section(self, req: Request, #[web.Path] id: int) -> Response
+        let folder = self.docs.store.folder(id)
+        let locale = if folder == none then "fr" else folder.locale end
+        self.done(req, self.docs.set_section(id, form_of(req)["section"] ?? "", uid_of(req)), "Section modifiée.", locale)
     end
 
     #[web.Post("/folders/:id")]

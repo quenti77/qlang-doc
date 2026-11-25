@@ -165,6 +165,14 @@ fun all_migrations() -> array<migrate.Migration>
                 "ALTER TABLE packages DROP COLUMN status",
             ],
         },
+        migrate.Migration {
+            id: "007_sections",
+            up: [
+                "ALTER TABLE folders ADD COLUMN section VARCHAR(10) NOT NULL DEFAULT 'doc'",
+                "ALTER TABLE release_folders ADD COLUMN section VARCHAR(10) NOT NULL DEFAULT 'doc'",
+            ],
+            down: ["ALTER TABLE release_folders DROP COLUMN section", "ALTER TABLE folders DROP COLUMN section"],
+        },
     ]
 end
 

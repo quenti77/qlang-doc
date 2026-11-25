@@ -1,7 +1,7 @@
 import describe, it, expect, finish from "@test"
 import Docs, Change from "./Docs.q"
 import fresh_docs from "./TestSupport.q"
-import AuditFilter from "./Models.q"
+import AuditFilter, SnapFolder from "./Models.q"
 
 fun admin(docs: Docs) -> int
     docs.create_account("quentin", "a long enough password", "admin", none).unwrap()
@@ -87,6 +87,20 @@ fun test_suite()
             let log = docs.store.audit("page", 10, 0)
             expect(log[0].action).to_be("page.delete")
             expect(log[0].data.contains("last words")).to_be(true)
+        end)
+    end)
+
+    describe("sections", fun()
+        it("puts top-level folders in the guides or the reference, and snapshots it", fun()
+            let docs = fresh_docs()
+            let me = admin(docs)
+            let api = docs.create_folder("fr", none, "API", "", me).unwrap()
+            let inner = docs.create_folder("fr", api, "Web", "", me).unwrap()
+            expect(docs.set_section(api, "ref", me).is_ok()).to_be(true)
+            expect(docs.set_section(api, "nope", me).is_err()).to_be(true)
+            expect(docs.set_section(inner, "ref", me).is_err()).to_be(true)
+            let snap = docs.snapshot().0
+            expect(snap.filter(fun(f: SnapFolder) -> bool f.section == "ref" end).len()).to_be(2)
         end)
     end)
 

@@ -33,7 +33,7 @@ fun account_of(row: Row) -> Account
 end
 
 fun folder_of(row: Row) -> Folder
-    Folder { id: col_int(row, "id"), parent_id: col_opt(row, "parent_id"), locale: col_text(row, "locale"), slug: col_text(row, "slug"), title: col_text(row, "title"), position: col_int(row, "position") }
+    Folder { id: col_int(row, "id"), parent_id: col_opt(row, "parent_id"), locale: col_text(row, "locale"), slug: col_text(row, "slug"), title: col_text(row, "title"), position: col_int(row, "position"), section: col_text(row, "section") }
 end
 
 fun page_of(row: Row) -> Page
@@ -166,6 +166,10 @@ impl Store
 
     public fun update_folder(self, id: int, slug: string, title: string)
         self.exec("UPDATE folders SET slug = ?, title = ? WHERE id = ?", [text(slug), text(title), num(id)])
+    end
+
+    public fun set_folder_section(self, id: int, section: string)
+        self.exec("UPDATE folders SET section = ? WHERE id = ?", [text(section), num(id)])
     end
 
     public fun move_folder(self, id: int, parent_id: int?)
@@ -321,7 +325,7 @@ impl Store
     end
 
     public fun add_release_folder(self, release_id: int, f: SnapFolder)
-        self.exec("INSERT INTO release_folders (release_id, locale, path, title, position) VALUES (?, ?, ?, ?, ?)", [num(release_id), text(f.locale), text(f.path), text(f.title), num(f.position)])
+        self.exec("INSERT INTO release_folders (release_id, locale, path, title, position, section) VALUES (?, ?, ?, ?, ?, ?)", [num(release_id), text(f.locale), text(f.path), text(f.title), num(f.position), text(f.section)])
     end
 
     public fun add_release_page(self, release_id: int, p: SnapPage)
@@ -331,7 +335,7 @@ impl Store
     public fun release_folders(self, release_id: int) -> array<SnapFolder>
         let out: array<SnapFolder> = []
         for row in self.rows("SELECT * FROM release_folders WHERE release_id = ? ORDER BY locale, path", [num(release_id)]) do
-            out.push(SnapFolder { locale: col_text(row, "locale"), path: col_text(row, "path"), title: col_text(row, "title"), position: col_int(row, "position") })
+            out.push(SnapFolder { locale: col_text(row, "locale"), path: col_text(row, "path"), title: col_text(row, "title"), position: col_int(row, "position"), section: col_text(row, "section") })
         end
         out
     end

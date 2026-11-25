@@ -15,6 +15,7 @@ struct Folder
     public slug: string
     public title: string
     public position: int
+    public section: string
 end
 
 --" A page of the working copy (what the editors change). --"
@@ -74,6 +75,7 @@ struct SnapFolder
     public path: string
     public title: string
     public position: int
+    public section: string
 end
 
 --" A page as a release kept it: served as is, whatever happens to the working copy afterwards. --"

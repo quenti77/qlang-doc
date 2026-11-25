@@ -29,6 +29,8 @@ struct Change
 end
 
 let LOCALES = ["fr", "en"]
+--" The two parts of the site: the guides and the reference. --"
+let SECTIONS = ["doc", "ref"]
 
 fun is_slug(text: string) -> bool
     if text == "" or text.len() > 100 then
@@ -223,6 +225,26 @@ impl Docs
         end
         self.store.update_folder(id, slug, name)
         self.store.log(actor, "folder.update", "folder", id, "Dossier « {name} » modifié", Json.object({ "from_title": Json.string(folder.title), "to_title": Json.string(name), "from_slug": Json.string(folder.slug), "to_slug": Json.string(slug) }))
+        Ok(true)
+    end
+
+    --" Puts a top-level folder, with everything under it, in the guides ("doc") or in the reference ("ref"). --"
+    public fun set_section(self, id: int, section: string, actor: int?) -> Result<bool, string>
+        let folder = self.store.folder(id)
+        if folder == none then
+            return Err("Dossier introuvable.")
+        end
+        if not SECTIONS.contains(section) then
+            return Err("Section inconnue.")
+        end
+        if folder.parent_id != none then
+            return Err("Seuls les dossiers de premier niveau ont une section.")
+        end
+        if folder.section == section then
+            return Ok(true)
+        end
+        self.store.set_folder_section(id, section)
+        self.store.log(actor, "folder.section", "folder", id, "Dossier « {folder.title} » rangé dans {section}", Json.object({ "from": Json.string(folder.section), "to": Json.string(section) }))
         Ok(true)
     end
 
@@ -458,8 +480,15 @@ impl Docs
         for locale in LOCALES do
             let folders = self.store.folders(locale)
             let paths = folder_paths(folders)
+            let sections: map<string, string> = {}
             for f in folders do
-                folders_out.push(SnapFolder { locale: locale, path: paths[f.id] ?? f.slug, title: f.title, position: f.position })
+                if f.parent_id == none then
+                    sections[paths[f.id] ?? f.slug] = f.section
+                end
+            end
+            for f in folders do
+                let path = paths[f.id] ?? f.slug
+                folders_out.push(SnapFolder { locale: locale, path: path, title: f.title, position: f.position, section: sections[path.split("/")[0]] ?? "doc" })
             end
             for p in self.store.pages(locale) do
                 pages_out.push(SnapPage { locale: locale, path: page_path(p.folder_id, p.slug, paths), title: p.title, markdown: p.markdown, html: p.html, toc: p.toc, position: p.position })
@@ -640,4 +669,4 @@ fun diff_stats(old: string, new: string) -> Stats
     stats(diff(old, new))
 end
 
-export Docs, Rendered, Change, ImportResult, LOCALES, slug_of, is_slug
+export Docs, Rendered, Change, ImportResult, LOCALES, SECTIONS, slug_of, is_slug

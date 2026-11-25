@@ -7,6 +7,7 @@ let ACTION_LABELS: map<string, string> = {
     "folder.create": "Dossier créé",
     "folder.delete": "Dossier supprimé",
     "folder.move": "Dossier déplacé",
+    "folder.section": "Section du dossier changée",
     "folder.update": "Dossier modifié",
     "package.add": "Paquet ajouté",
     "package.approve": "Paquet approuvé",

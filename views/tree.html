@@ -19,6 +19,9 @@
       <label>Dans
         <select name="parent">{% for f in folders %}<option value="{{ f.value }}">{{ f.label }}</option>{% end %}</select>
       </label>
+      <label>Section (dossier de premier niveau)
+        <select name="section"><option value="doc">Documentation</option><option value="ref">Référence</option></select>
+      </label>
       <button class="btn primary" type="submit">Créer</button>
     </form>
   </details>
@@ -33,7 +36,7 @@
   {% for r in rows %}
     {% if r.is_folder %}
     <tr class="folder">
-      <td style="{{ r.style }}"><strong>📁 {{ r.title }}</strong></td>
+      <td style="{{ r.style }}"><strong>📁 {{ r.title }}</strong>{% if r.is_root %} <span class="badge">{{ r.section_label }}</span>{% end %}</td>
       <td class="muted">/{{ r.path }}</td>
       <td></td>
       <td class="right actions">
@@ -48,6 +51,15 @@
               <label>Adresse <input name="slug" value="{{ r.slug }}" required></label>
               <button class="btn primary" type="submit">Renommer</button>
             </form>
+            {% if r.is_root %}
+            <form method="post" action="/admin/folders/{{ r.id }}/section" class="stack">
+              {{ csrf | raw }}
+              <label>Section
+                <select name="section"><option value="doc" {{ r.sel_doc }}>Documentation</option><option value="ref" {{ r.sel_ref }}>Référence</option></select>
+              </label>
+              <button class="btn" type="submit">Changer de section</button>
+            </form>
+            {% end %}
             <form method="post" action="/admin/folders/{{ r.id }}/move" class="stack">
               {{ csrf | raw }}
               <label>Déplacer dans

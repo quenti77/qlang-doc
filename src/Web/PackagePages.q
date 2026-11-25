@@ -99,8 +99,10 @@ impl PackagePages
             "versions": Json.array([]),
             "has_versions": Json.of(false),
             "query": Json.string(""),
-            "t": Json.of({ "docs": "Documentation", "packages": "Paquets", "playground": "Playground", "search": "Rechercher dans la doc" }),
+            "t": Json.of({ "docs": "Documentation", "reference": "Référence", "packages": "Paquets", "playground": "Playground", "search": "Rechercher dans la doc" }),
             "docs_url": Json.string("/fr/docs"),
+            "ref_url": Json.string("/fr/ref"),
+            "other_url": Json.string("/en/docs"),
             "search_url": Json.string("/fr/search"),
         }
     end

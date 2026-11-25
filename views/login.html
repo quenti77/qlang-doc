@@ -1,0 +1,9 @@
+<section class="narrow">
+  <h1>Connexion</h1>
+  <form method="post" action="/admin/login" class="stack">
+    {{ csrf | raw }}
+    <label>Identifiant <input name="login" value="{{ login }}" autocomplete="username" required autofocus></label>
+    <label>Mot de passe <input name="password" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary" type="submit">Se connecter</button>
+  </form>
+</section>

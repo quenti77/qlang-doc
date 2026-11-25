@@ -352,6 +352,19 @@ impl Store
         SnapPage { locale: col_text(row, "locale"), path: col_text(row, "path"), title: col_text(row, "title"), markdown: col_text(row, "markdown"), html: col_text(row, "html"), toc: col_text(row, "toc"), position: col_int(row, "position") }
     end
 
+    --" The pages of a release whose title or text holds the words (a plain `LIKE`, good enough for a documentation). --"
+    public fun search_release(self, release_id: int, locale: string, words: string, limit: int) -> array<SnapPage>
+        let out: array<SnapPage> = []
+        let pattern = "%" + words.lower().replace("\\", "").replace("%", "").replace("_", "") + "%"
+        for row in self.rows("SELECT * FROM release_pages WHERE release_id = ? AND locale = ? AND (LOWER(title) LIKE ? OR LOWER(markdown) LIKE ?) ORDER BY (CASE WHEN LOWER(title) LIKE ? THEN 0 ELSE 1 END), path LIMIT ?", [num(release_id), text(locale), text(pattern), text(pattern), text(pattern), num(limit)]) do
+            out.push(SnapPage {
+                locale: col_text(row, "locale"), path: col_text(row, "path"), title: col_text(row, "title"), markdown: col_text(row, "markdown"),
+                html: col_text(row, "html"), toc: col_text(row, "toc"), position: col_int(row, "position"),
+            })
+        end
+        out
+    end
+
     public fun delete_release(self, id: int)
         self.exec("DELETE FROM releases WHERE id = ?", [num(id)])
     end

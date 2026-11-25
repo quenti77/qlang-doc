@@ -1,0 +1,26 @@
+<div class="head">
+  <h1>Historique · {{ title }}</h1>
+  <a class="btn small" href="/admin/pages/{{ id }}">← Retour à la page</a>
+</div>
+<table class="list">
+  <thead><tr><th>Rév.</th><th>Quand</th><th>Qui</th><th>Origine</th><th>Note</th><th>Changement</th><th class="right">Actions</th></tr></thead>
+  <tbody>
+  {% for r in revisions %}
+    <tr>
+      <td><strong>{{ r.number }}</strong> {% if r.is_current %}<span class="badge">courante</span>{% end %}</td>
+      <td class="nowrap">{{ r.at }}</td>
+      <td>{{ r.author }}</td>
+      <td>{{ r.source }}</td>
+      <td>{{ r.summary }}</td>
+      <td class="nowrap"><span class="add">+{{ r.added }}</span> <span class="del">−{{ r.removed }}</span></td>
+      <td class="right actions">
+        {% if r.has_prev %}<a class="btn small" href="/admin/pages/{{ id }}/diff?from={{ r.prev }}&to={{ r.number }}">Diff</a>{% end %}
+        {% if r.is_current %}{% else %}
+        <a class="btn small" href="/admin/pages/{{ id }}/diff?from={{ r.number }}">Comparer à la courante</a>
+        <form method="post" action="/admin/pages/{{ id }}/restore" data-confirm="Revenir à la révision {{ r.number }} ? Une nouvelle révision sera créée.">{{ csrf | raw }}<input type="hidden" name="number" value="{{ r.number }}"><button class="btn small" type="submit">Rétablir</button></form>
+        {% end %}
+      </td>
+    </tr>
+  {% end %}
+  </tbody>
+</table>

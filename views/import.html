@@ -1,0 +1,17 @@
+<div class="head">
+  <h1>Importer du Markdown</h1>
+  <div class="tabs">
+    <a href="/admin/import?locale=fr" {% if is_fr %}aria-current="page"{% end %}>Français</a>
+    <a href="/admin/import?locale=en" {% if is_en %}aria-current="page"{% end %}>English</a>
+  </div>
+</div>
+<p class="muted">Chaque fichier devient une page : le titre vient du <code>title:</code> du front matter, sinon du premier titre <code>#</code>, sinon du nom du fichier ; l'adresse vient du nom du fichier. Si une page porte déjà cette adresse dans le dossier, le fichier en fait une <strong>nouvelle révision</strong> (rien n'est perdu). Les pages importées restent éditables.</p>
+<form method="post" action="/admin/import" enctype="multipart/form-data" class="stack wide">
+  {{ csrf | raw }}
+  <input type="hidden" name="locale" value="{{ locale }}">
+  <label>Dossier de destination
+    <select name="folder">{% for f in folders %}<option value="{{ f.value }}" {% if f.selected %}selected{% end %}>{{ f.label }}</option>{% end %}</select>
+  </label>
+  <label>Fichiers (.md) <input type="file" name="files" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple required></label>
+  <div><button class="btn primary" type="submit">Importer</button></div>
+</form>

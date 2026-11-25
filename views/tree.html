@@ -1,0 +1,80 @@
+<div class="head">
+  <h1>Documentation</h1>
+  <div class="tabs">
+    <a href="/admin/docs?locale=fr" {% if is_fr %}aria-current="page"{% end %}>Français</a>
+    <a href="/admin/docs?locale=en" {% if is_en %}aria-current="page"{% end %}>English</a>
+  </div>
+</div>
+
+<div class="toolbar">
+  <a class="btn primary" href="/admin/new-page?locale={{ locale }}">Nouvelle page</a>
+  <a class="btn" href="/admin/import?locale={{ locale }}">Importer du Markdown</a>
+  <details class="pop">
+    <summary class="btn">Nouveau dossier</summary>
+    <form method="post" action="/admin/folders" class="stack pop-body">
+      {{ csrf | raw }}
+      <input type="hidden" name="locale" value="{{ locale }}">
+      <label>Titre <input name="title" required></label>
+      <label>Adresse <input name="slug" placeholder="généré depuis le titre"></label>
+      <label>Dans
+        <select name="parent">{% for f in folders %}<option value="{{ f.value }}">{{ f.label }}</option>{% end %}</select>
+      </label>
+      <button class="btn primary" type="submit">Créer</button>
+    </form>
+  </details>
+</div>
+
+{% if empty %}
+<p class="muted">Aucune page en {{ locale }}. Crée un dossier, une page, ou importe des fichiers Markdown.</p>
+{% else %}
+<table class="list tree">
+  <thead><tr><th>Titre</th><th>Adresse</th><th>Modifiée</th><th class="right">Actions</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    {% if r.is_folder %}
+    <tr class="folder">
+      <td style="{{ r.style }}"><strong>📁 {{ r.title }}</strong></td>
+      <td class="muted">/{{ r.path }}</td>
+      <td></td>
+      <td class="right actions">
+        <form method="post" action="/admin/shift">{{ csrf | raw }}<input type="hidden" name="kind" value="folder"><input type="hidden" name="id" value="{{ r.id }}"><input type="hidden" name="locale" value="{{ locale }}"><button class="icon" name="dir" value="up" title="Monter">↑</button><button class="icon" name="dir" value="down" title="Descendre">↓</button></form>
+        <a class="btn small" href="/admin/new-page?locale={{ locale }}&folder={{ r.id }}">+ page</a>
+        <details class="pop">
+          <summary class="btn small">Gérer</summary>
+          <div class="pop-body">
+            <form method="post" action="/admin/folders/{{ r.id }}" class="stack">
+              {{ csrf | raw }}
+              <label>Titre <input name="title" value="{{ r.title }}" required></label>
+              <label>Adresse <input name="slug" value="{{ r.slug }}" required></label>
+              <button class="btn primary" type="submit">Renommer</button>
+            </form>
+            <form method="post" action="/admin/folders/{{ r.id }}/move" class="stack">
+              {{ csrf | raw }}
+              <label>Déplacer dans
+                <select name="to">{% for f in folders %}<option value="{{ f.value }}">{{ f.label }}</option>{% end %}</select>
+              </label>
+              <button class="btn" type="submit">Déplacer</button>
+            </form>
+            <form method="post" action="/admin/folders/{{ r.id }}/delete" data-confirm="Supprimer ce dossier ? Il doit être vide.">
+              {{ csrf | raw }}<button class="btn danger" type="submit">Supprimer</button>
+            </form>
+          </div>
+        </details>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td style="{{ r.style }}"><a href="/admin/pages/{{ r.id }}">📄 {{ r.title }}</a></td>
+      <td class="muted">/{{ r.path }}</td>
+      <td class="muted nowrap">{{ r.updated }} · rév. {{ r.revision }}</td>
+      <td class="right actions">
+        <form method="post" action="/admin/shift">{{ csrf | raw }}<input type="hidden" name="kind" value="page"><input type="hidden" name="id" value="{{ r.id }}"><input type="hidden" name="locale" value="{{ locale }}"><button class="icon" name="dir" value="up" title="Monter">↑</button><button class="icon" name="dir" value="down" title="Descendre">↓</button></form>
+        <a class="btn small" href="/admin/pages/{{ r.id }}">Éditer</a>
+        <a class="btn small" href="/admin/pages/{{ r.id }}/history">Historique</a>
+      </td>
+    </tr>
+    {% end %}
+  {% end %}
+  </tbody>
+</table>
+{% end %}

@@ -1,0 +1,24 @@
+<div class="head">
+  <h1>Version {{ release.label }} {% if release.current %}<span class="badge ok">publiée</span>{% end %}</h1>
+  <a class="btn small" href="/admin/releases">← Versions</a>
+</div>
+<p>qlang <strong>{{ release.qlang_version }}</strong> · créée le {{ release.at }} par {{ release.author }} · {{ release.pages }} pages</p>
+{% if release.note %}<p>{{ release.note }}</p>{% end %}
+<div class="toolbar">
+  <a class="btn" href="/fr/docs?v={{ release.label }}" target="_blank" rel="noopener">Voir sur le site</a>
+  {% if release.current %}{% else %}
+  <form method="post" action="/admin/releases/{{ release.id }}/publish" data-confirm="Publier cette version sur le site ?">{{ csrf | raw }}<button class="btn primary" type="submit">Publier cette version</button></form>
+  {% end %}
+  <form method="post" action="/admin/releases/{{ release.id }}/restore" data-confirm="Remettre les pages de cette version dans la copie de travail ? Chaque page modifiée reçoit une nouvelle révision.">{{ csrf | raw }}<button class="btn" type="submit">Rétablir dans la copie de travail</button></form>
+  {% if release.current %}{% else %}
+  <form method="post" action="/admin/releases/{{ release.id }}/delete" data-confirm="Supprimer définitivement cette version ?">{{ csrf | raw }}<button class="btn danger" type="submit">Supprimer</button></form>
+  {% end %}
+</div>
+<table class="list">
+  <thead><tr><th>Langue</th><th>Page</th><th>Adresse</th><th>Lignes</th></tr></thead>
+  <tbody>
+  {% for p in pages %}
+    <tr><td>{{ p.locale }}</td><td>{{ p.title }}</td><td class="muted">/{{ p.path }}</td><td>{{ p.lines }}</td></tr>
+  {% end %}
+  </tbody>
+</table>

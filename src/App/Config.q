@@ -4,6 +4,7 @@ struct Config
     public session_secret: string
     public secure_cookies: bool
     public submissions_open: bool
+    public views_dir: string
 end
 
 impl Config
@@ -22,6 +23,7 @@ impl Config
             session_secret: secret,
             secure_cookies: env.get("DOC_SECURE_COOKIES") == "1",
             submissions_open: env.get("DOC_SUBMISSIONS") == "open",
+            views_dir: env.get("DOC_VIEWS_DIR") ?? "views",
         })
     end
 end

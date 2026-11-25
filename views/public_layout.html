@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} · qlang</title>
+  <script src="/theme.js"></script>
+  <link rel="stylesheet" href="/site.css">
+  <link rel="stylesheet" href="/docs.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="/">q<b>lang</b></a>
+  <nav class="main">
+    <a href="{{ docs_url }}">{{ t.docs }}</a>
+    <a href="/packages">{{ t.packages }}</a>
+    <a href="/playground">{{ t.playground }}</a>
+  </nav>
+  <form class="search" action="{{ search_url }}" method="get" role="search"><input type="search" name="q" value="{{ query }}" placeholder="{{ t.search }}" aria-label="{{ t.search }}"></form>
+  {% if has_versions %}
+  <details class="pop versions"><summary class="btn small">{{ label }} ▾</summary>
+    <div class="pop-body">{% for v in versions %}<a href="{{ v.url }}" {% if v.current %}aria-current="true"{% end %}>{{ v.label }}</a>{% end %}</div>
+  </details>
+  {% end %}
+  <a class="lang" href="/{{ other_locale }}/docs">{{ other_locale | upper }}</a>
+  <span class="theme" role="group" aria-label="Thème"><button type="button" data-theme-set="light">Clair</button><button type="button" data-theme-set="dark">Sombre</button><button type="button" data-theme-set="system">Auto</button></span>
+</div></header>
+{{ content | raw }}
+<footer><div class="wrap">qlang</div></footer>
+<script src="/theme-toggle.js"></script>
+</body>
+</html>

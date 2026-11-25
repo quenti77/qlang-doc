@@ -1,0 +1,14 @@
+<h1>Nouvelle page</h1>
+<form method="post" action="/admin/pages" class="stack wide">
+  {{ csrf | raw }}
+  <input type="hidden" name="locale" value="{{ locale }}">
+  <div class="row">
+    <label class="grow">Titre <input name="title" value="{{ title }}" required autofocus></label>
+    <label class="grow">Adresse <input name="slug" value="{{ slug }}" placeholder="générée depuis le titre"></label>
+    <label>Dossier
+      <select name="folder">{% for f in folders %}<option value="{{ f.value }}" {% if f.selected %}selected{% end %}>{{ f.label }}</option>{% end %}</select>
+    </label>
+  </div>
+  <label>Markdown <textarea name="markdown" class="editor" rows="18">{{ markdown }}</textarea></label>
+  <div><button class="btn primary" type="submit">Créer la page</button> <a class="btn" href="/admin/docs?locale={{ locale }}">Annuler</a></div>
+</form>

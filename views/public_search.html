@@ -1,0 +1,12 @@
+<main class="wrap narrow">
+  <h1>{{ t.search }}</h1>
+  <form action="" method="get" class="row"><input class="grow" type="search" name="q" value="{{ query }}" autofocus><button class="btn primary" type="submit">OK</button></form>
+  {% if searched %}
+    {% if has_hits %}
+    <p class="muted">{{ count }} {{ t.results }}</p>
+    <ul class="hits">
+      {% for h in hits %}<li><a href="{{ h.url }}"><strong>{{ h.title }}</strong></a> <span class="muted">{{ h.path }}</span><br><span class="excerpt">{{ h.excerpt }}</span></li>{% end %}
+    </ul>
+    {% else %}<p class="muted">{{ t.no_results }}</p>{% end %}
+  {% end %}
+</main>

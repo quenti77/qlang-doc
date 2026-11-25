@@ -1,0 +1,35 @@
+<h1>Tableau de bord</h1>
+<div class="cards">
+  <div class="card"><h3>{{ pages }}</h3><p>pages dans la copie de travail</p></div>
+  <div class="card">
+    {% if has_published %}<h3>{{ published }}</h3><p>version publiée sur le site</p>
+    {% else %}<h3>—</h3><p>aucune version publiée</p>{% end %}
+    <p><a href="/admin/releases">Gérer les versions →</a></p>
+  </div>
+</div>
+
+<h2>En attente de publication</h2>
+{% if has_changes %}
+<table class="list">
+  <thead><tr><th>Changement</th><th>Langue</th><th>Page</th></tr></thead>
+  <tbody>
+  {% for c in changes %}
+    <tr><td><span class="badge">{{ c.label }}</span></td><td>{{ c.locale }}</td><td>{{ c.title }} <span class="muted">/{{ c.path }}</span></td></tr>
+  {% end %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Rien : la copie de travail est identique à la version publiée.</p>
+{% end %}
+
+<h2>Activité récente</h2>
+<table class="list">
+  <tbody>
+  {% for a in activity %}
+    <tr><td class="nowrap muted">{{ a.at }}</td><td>{{ a.user }}</td><td>{{ a.summary }}</td></tr>
+  {% else %}
+    <tr><td class="muted">Rien pour l'instant.</td></tr>
+  {% end %}
+  </tbody>
+</table>
+<p><a href="/admin/audit">Tout le journal →</a></p>

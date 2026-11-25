@@ -1,6 +1,6 @@
 import "@markdown/markdown.q" as markdown
 import "@std/web/session.q" as sessions
-import Folder, Page, Account, Release, SnapFolder, SnapPage from "./Models.q"
+import Page, Account, SnapFolder, SnapPage from "./Models.q"
 import Store from "./Store.q"
 import folder_paths, page_path from "./Tree.q"
 import render_page from "../Markup/Render.q"
@@ -11,6 +11,13 @@ struct Rendered
     public html: string
     public toc: string
     public title: string
+end
+
+--" What an import did: the page, whether it is new, and its revision. --"
+struct ImportResult
+    public id: int
+    public created: bool
+    public revision: int
 end
 
 --" What the changes did to the working copy compared to the published release. --"
@@ -276,6 +283,41 @@ impl Docs
         Ok(true)
     end
 
+    --" Moves a folder or a page one place up (`-1`) or down (`1`) among its siblings. --"
+    public fun shift(self, kind: string, id: int, direction: int, actor: int?) -> Result<bool, string>
+        let ids: array<int> = []
+        if kind == "folder" then
+            let f = self.store.folder(id)
+            if f == none then
+                return Err("Dossier introuvable.")
+            end
+            for s in self.store.folders(f.locale) do
+                if s.parent_id == f.parent_id then
+                    ids.push(s.id)
+                end
+            end
+        else
+            let p = self.store.page(id)
+            if p == none then
+                return Err("Page introuvable.")
+            end
+            for s in self.store.page_rows(p.locale) do
+                if s.folder_id == p.folder_id then
+                    ids.push(s.id)
+                end
+            end
+        end
+        let at = ids.index_of(id) ?? -1
+        let to = at + direction
+        if at < 0 or to < 0 or to >= ids.len() then
+            return Ok(true)
+        end
+        let other = ids[to]
+        ids[to] = id
+        ids[at] = other
+        self.reorder(if kind == "folder" then "folders" else "pages" end, ids, actor)
+    end
+
     -- Pages
 
     public fun create_page(self, locale: string, folder_id: int?, title: string, slug_input: string, markdown_text: string, source: string, actor: int?) -> Result<int, string>
@@ -382,7 +424,7 @@ impl Docs
     end
 
     --" Imports a Markdown file into a folder: a new page, or a new revision of the page that has this name. --"
-    public fun import_markdown(self, locale: string, folder_id: int?, filename: string, content: string, actor: int?) -> Result<int, string>
+    public fun import_markdown(self, locale: string, folder_id: int?, filename: string, content: string, actor: int?) -> Result<ImportResult, string>
         if content.trim() == "" then
             return Err("Le fichier est vide.")
         end
@@ -394,9 +436,17 @@ impl Docs
         end
         let existing = self.store.find_page(locale, folder_id, slug)
         if existing != none then
-            return self.edit_page(existing.id, info.title, info.body, "Import de {filename}", "import", actor)
+            let revision = self.edit_page(existing.id, info.title, info.body, "Import de {filename}", "import", actor)
+            if revision.is_err() then
+                return Err(revision.unwrap_err())
+            end
+            return Ok(ImportResult { id: existing.id, created: false, revision: revision.unwrap() })
         end
-        self.create_page(locale, folder_id, info.title, slug, info.body, "import", actor)
+        let id = self.create_page(locale, folder_id, info.title, slug, info.body, "import", actor)
+        if id.is_err() then
+            return Err(id.unwrap_err())
+        end
+        Ok(ImportResult { id: id.unwrap(), created: true, revision: 1 })
     end
 
     -- Releases
@@ -563,4 +613,4 @@ fun diff_stats(old: string, new: string) -> Stats
     stats(diff(old, new))
 end
 
-export Docs, Rendered, Change, LOCALES, slug_of, is_slug
+export Docs, Rendered, Change, ImportResult, LOCALES, slug_of, is_slug

@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: qlang_doc_test
+          POSTGRES_USER: qlang_doc
+          POSTGRES_PASSWORD: qlang-doc-ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U qlang_doc -d qlang_doc_test"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DOC_TEST_DATABASE_URL: postgres://qlang_doc:qlang-doc-ci@127.0.0.1:5432/qlang_doc_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install qlang
+        run: curl -fsSL https://raw.githubusercontent.com/quenti77/qlang/main/install.sh | sh
+      - run: ~/.local/bin/qlang install
+      - run: ~/.local/bin/qlang fmt --check
+      - run: ~/.local/bin/qlang test

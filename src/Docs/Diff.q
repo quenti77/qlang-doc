@@ -71,7 +71,7 @@ fun middle(a: array<string>, b: array<string>, at: int, n: int, m: int) -> array
     end
     let width = m + 1
     let table: array<int> = []
-    for k in 0..((n + 1) * width) do
+    for _k in 0..((n + 1) * width) do
         table.push(0)
     end
     let i = n - 1
@@ -131,7 +131,7 @@ end
 --" Only the changed lines and `context` unchanged ones around them, in groups (a hunk each). --"
 fun hunks(lines: array<Line>, context: int) -> array<array<Line>>
     let keep: array<bool> = []
-    for l in lines do
+    for _l in lines do
         keep.push(false)
     end
     let i = 0

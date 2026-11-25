@@ -1,0 +1,24 @@
+<div class="wrap docs">
+  <aside class="side" aria-label="Navigation">
+    <nav>
+    {% for n in nav %}
+      {% if n.is_folder %}<p class="side-title" style="{{ n.style }}">{{ n.title }}</p>
+      {% else %}<a href="{{ n.url }}" style="{{ n.style }}" {% if n.active %}aria-current="page"{% end %}>{{ n.title }}</a>{% end %}
+    {% end %}
+    </nav>
+  </aside>
+  <article class="content">
+    {% if has_crumbs %}<p class="crumbs">{{ crumbs }}</p>{% end %}
+    <div class="prose">{{ html | raw }}</div>
+    <nav class="pager-docs">
+      {% if has_prev %}<a href="{{ prev_url }}">← {{ prev_title }}</a>{% else %}<span></span>{% end %}
+      {% if has_next %}<a href="{{ next_url }}">{{ next_title }} →</a>{% end %}
+    </nav>
+  </article>
+  {% if has_toc %}
+  <aside class="toc" aria-label="{{ t.on_this_page }}">
+    <p class="side-title">{{ t.on_this_page }}</p>
+    {% for h in toc %}<a href="#{{ h.id }}" style="{{ h.style }}">{{ h.text }}</a>{% end %}
+  </aside>
+  {% end %}
+</div>

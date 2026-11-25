@@ -1,0 +1,32 @@
+<h1>Comptes</h1>
+<table class="list">
+  <thead><tr><th>Identifiant</th><th>Rôle</th><th class="right">Actions</th></tr></thead>
+  <tbody>
+  {% for a in accounts %}
+    <tr>
+      <td>{{ a.login }}</td>
+      <td>{% if a.is_admin %}administrateur{% else %}éditeur{% end %}</td>
+      <td class="right actions">
+        <details class="pop"><summary class="btn small">Mot de passe</summary>
+          <form method="post" action="/admin/accounts/{{ a.id }}/password" class="stack pop-body">{{ csrf | raw }}
+            <label>Nouveau mot de passe <input type="password" name="password" minlength="12" required autocomplete="new-password"></label>
+            <button class="btn primary" type="submit">Changer</button>
+          </form>
+        </details>
+        <form method="post" action="/admin/accounts/{{ a.id }}/delete" data-confirm="Supprimer le compte {{ a.login }} ?">{{ csrf | raw }}<button class="btn small danger" type="submit">Supprimer</button></form>
+      </td>
+    </tr>
+  {% end %}
+  </tbody>
+</table>
+<h2>Nouveau compte</h2>
+<p class="muted">Un éditeur écrit et importe des pages ; un administrateur publie les versions et gère les comptes.</p>
+<form method="post" action="/admin/accounts" class="stack wide">
+  {{ csrf | raw }}
+  <div class="row">
+    <label class="grow">Identifiant <input name="login" required minlength="3" autocomplete="off"></label>
+    <label class="grow">Mot de passe (12 caractères au moins) <input name="password" type="password" required minlength="12" autocomplete="new-password"></label>
+    <label>Rôle <select name="role"><option value="editor">éditeur</option><option value="admin">administrateur</option></select></label>
+  </div>
+  <div><button class="btn primary" type="submit">Créer le compte</button></div>
+</form>

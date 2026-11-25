@@ -1,0 +1,53 @@
+<h1>Versions</h1>
+<p class="muted">Une version est une copie figée de la documentation, liée à une version de qlang. Le site public sert la version publiée ; revenir à une version plus ancienne se fait en un clic et ne supprime rien.</p>
+
+<h2>Créer une version</h2>
+{% if has_pending %}
+<details class="more" open>
+  <summary>{{ pending_count }} changement(s) depuis la version publiée</summary>
+  <table class="list">
+    <tbody>
+    {% for c in pending %}<tr><td><span class="badge">{{ c.label }}</span></td><td>{{ c.locale }}</td><td>{{ c.title }} <span class="muted">/{{ c.path }}</span></td></tr>{% end %}
+    </tbody>
+  </table>
+</details>
+{% else %}
+<p class="muted">La copie de travail est identique à la version publiée.</p>
+{% end %}
+
+<form method="post" action="/admin/releases" class="stack wide">
+  {{ csrf | raw }}
+  <div class="row">
+    <label class="grow">Nom de la version <input name="label" placeholder="1.12.0" required></label>
+    <label class="grow">Version de qlang documentée <input name="qlang_version" value="{{ suggestion }}" placeholder="1.12.0"></label>
+  </div>
+  <label>Note <input name="note" placeholder="facultatif : ce que contient cette version"></label>
+  <label class="check"><input type="checkbox" name="publish" value="1" checked> Publier tout de suite</label>
+  <div><button class="btn primary" type="submit">Créer la version</button> <span class="muted">(réservé aux administrateurs)</span></div>
+</form>
+
+<h2>Versions existantes</h2>
+{% if has_releases %}
+<table class="list">
+  <thead><tr><th>Version</th><th>qlang</th><th>Créée</th><th>Pages</th><th>Note</th><th class="right">Actions</th></tr></thead>
+  <tbody>
+  {% for r in releases %}
+    <tr>
+      <td><a href="/admin/releases/{{ r.id }}"><strong>{{ r.label }}</strong></a> {% if r.current %}<span class="badge ok">publiée</span>{% end %}</td>
+      <td>{{ r.qlang_version }}</td>
+      <td class="nowrap muted">{{ r.at }} · {{ r.author }}</td>
+      <td>{{ r.pages }}</td>
+      <td>{{ r.note }}</td>
+      <td class="right actions">
+        <a class="btn small" href="/fr/docs?v={{ r.label }}" target="_blank" rel="noopener">Voir</a>
+        {% if r.current %}{% else %}
+        <form method="post" action="/admin/releases/{{ r.id }}/publish" data-confirm="Publier la version {{ r.label }} sur le site ?">{{ csrf | raw }}<button class="btn small" type="submit">Publier</button></form>
+        {% end %}
+      </td>
+    </tr>
+  {% end %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Aucune version pour l'instant : le site public n'affiche rien tant qu'une version n'est pas publiée.</p>
+{% end %}

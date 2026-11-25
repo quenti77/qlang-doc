@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="robots" content="noindex">
+  <title>{{ title }} · qlang admin</title>
+  <script src="/theme.js"></script>
+  <link rel="stylesheet" href="/site.css">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body class="admin">
+  <header class="top"><div class="wrap">
+    <a class="brand" href="/admin">q<b>lang</b> <span class="muted">admin</span></a>
+    {% if login %}
+    <nav class="main">
+      <a href="/admin" {% if nav_dashboard %}aria-current="page"{% end %}>Tableau de bord</a>
+      <a href="/admin/docs" {% if nav_docs %}aria-current="page"{% end %}>Documentation</a>
+      <a href="/admin/import" {% if nav_import %}aria-current="page"{% end %}>Import</a>
+      <a href="/admin/releases" {% if nav_releases %}aria-current="page"{% end %}>Versions</a>
+      <a href="/admin/audit" {% if nav_audit %}aria-current="page"{% end %}>Journal</a>
+      {% if is_admin %}<a href="/admin/accounts" {% if nav_accounts %}aria-current="page"{% end %}>Comptes</a>{% end %}
+    </nav>
+    <a class="muted" href="/fr/docs" target="_blank" rel="noopener">Voir le site ↗</a>
+    <span class="muted">{{ login }}</span>
+    <form method="post" action="/admin/logout">{{ csrf | raw }}<button class="link" type="submit">Se déconnecter</button></form>
+    {% else %}
+    <nav class="main"></nav>
+    {% end %}
+    <span class="theme" role="group" aria-label="Thème"><button type="button" data-theme-set="light">Clair</button><button type="button" data-theme-set="dark">Sombre</button><button type="button" data-theme-set="system">Auto</button></span>
+  </div></header>
+  <main class="wrap">
+    {% if flash %}<div class="flash {% if flash_ok %}flash-ok{% else %}flash-error{% end %}" role="status">{{ flash }}</div>{% end %}
+    {{ content | raw }}
+  </main>
+  <script src="/theme-toggle.js"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>

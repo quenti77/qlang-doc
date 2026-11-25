@@ -1,0 +1,43 @@
+<div class="head">
+  <h1>{{ title }}</h1>
+  <div class="actions">
+    <span class="muted">/{{ path }} · rév. {{ revision }} · {{ updated }}</span>
+    <a class="btn small" href="/admin/pages/{{ id }}/history">Historique</a>
+    <a class="btn small" href="/admin/docs?locale={{ locale }}">← Arbre</a>
+  </div>
+</div>
+
+<div class="split">
+  <form method="post" action="/admin/pages/{{ id }}" class="stack">
+    {{ csrf | raw }}
+    <label>Titre <input name="title" value="{{ title }}" required></label>
+    <label>Markdown <textarea id="markdown" name="markdown" class="editor" rows="26" spellcheck="false">{{ markdown }}</textarea></label>
+    <label>Note de modification <input name="summary" placeholder="facultatif : ce qui change"></label>
+    <div><button class="btn primary" type="submit">Enregistrer</button></div>
+  </form>
+  <div>
+    <h2 class="small">Aperçu <span class="muted" id="preview-state"></span></h2>
+    <div id="preview" class="prose card">{{ html | raw }}</div>
+  </div>
+</div>
+
+<details class="more">
+  <summary>Adresse, déplacement, suppression</summary>
+  <div class="row">
+    <form method="post" action="/admin/pages/{{ id }}/rename" class="stack">
+      {{ csrf | raw }}
+      <label>Adresse <input name="slug" value="{{ slug }}" required></label>
+      <button class="btn" type="submit">Changer l'adresse</button>
+    </form>
+    <form method="post" action="/admin/pages/{{ id }}/move" class="stack">
+      {{ csrf | raw }}
+      <label>Dossier
+        <select name="to">{% for f in folders %}<option value="{{ f.value }}" {% if f.selected %}selected{% end %}>{{ f.label }}</option>{% end %}</select>
+      </label>
+      <button class="btn" type="submit">Déplacer</button>
+    </form>
+    <form method="post" action="/admin/pages/{{ id }}/delete" data-confirm="Supprimer cette page ? Son dernier texte restera dans le journal.">
+      {{ csrf | raw }}<button class="btn danger" type="submit">Supprimer la page</button>
+    </form>
+  </div>
+</details>

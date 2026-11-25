@@ -1,0 +1,23 @@
+<div class="head">
+  <h1>Différences · {{ title }}</h1>
+  <a class="btn small" href="/admin/pages/{{ id }}/history">← Historique</a>
+</div>
+<p>Révision <strong>{{ older }}</strong> → <strong>{{ newer }}</strong> : <span class="add">+{{ added }}</span> <span class="del">−{{ removed }}</span></p>
+{% if same %}
+<p class="muted">Aucune différence dans le texte.</p>
+{% else %}
+<table class="diff">
+  <tbody>
+  {% for r in rows %}
+    {% if r.gap %}
+    <tr class="gap"><td colspan="3">⋯</td></tr>
+    {% else %}
+    <tr class="{% if r.add %}line-add{% end %}{% if r.del %}line-del{% end %}">
+      <td class="no">{{ r.old_no }}</td><td class="no">{{ r.new_no }}</td>
+      <td class="code"><span class="mark">{% if r.add %}+{% end %}{% if r.del %}−{% end %}</span>{{ r.text }}</td>
+    </tr>
+    {% end %}
+  {% end %}
+  </tbody>
+</table>
+{% end %}

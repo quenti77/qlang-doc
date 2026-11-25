@@ -1,0 +1,38 @@
+:root { --bg:#fafaf7; --fg:#1c1c1a; --muted:#6b6b66; --card:#fff; --line:#e4e3dc; --accent:#7c3aed; --on-accent:#fff; --code:#f1f0ea; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#151514; --fg:#ecebe5; --muted:#9a9990; --card:#1e1e1c; --line:#2f2f2b; --accent:#a78bfa; --on-accent:#1c1033; --code:#242421; } }
+:root[data-theme="dark"] { --bg:#151514; --fg:#ecebe5; --muted:#9a9990; --card:#1e1e1c; --line:#2f2f2b; --accent:#a78bfa; --on-accent:#1c1033; --code:#242421; }
+:root { color-scheme: light dark; } :root[data-theme="light"] { color-scheme: light; } :root[data-theme="dark"] { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; }
+a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+.wrap { max-width:68rem; margin:0 auto; padding:0 1rem; }
+header.top { border-bottom:1px solid var(--line); }
+header.top .wrap { display:flex; align-items:center; gap:2rem; height:3.5rem; }
+.brand { font-weight:700; font-size:1.15rem; color:var(--fg); }
+.brand b { color:var(--accent); }
+nav.main { display:flex; gap:1.25rem; flex:1; } nav.main a { color:var(--muted); } nav.main a:hover { color:var(--fg); text-decoration:none; }
+.lang { color:var(--muted); font-size:.9rem; }
+.hero { padding:4.5rem 0 3rem; }
+.hero h1 { font-size:clamp(2rem,5vw,3.25rem); line-height:1.15; margin:0 0 1rem; letter-spacing:-.02em; }
+.hero p { font-size:1.2rem; color:var(--muted); max-width:40rem; margin:0 0 1.75rem; }
+.btn { display:inline-block; padding:.65rem 1.2rem; border-radius:.5rem; border:1px solid var(--line); background:var(--card); color:var(--fg); font-weight:600; margin-right:.5rem; }
+.btn.primary { background:var(--accent); border-color:var(--accent); color:var(--on-accent); } .btn:hover { text-decoration:none; filter:brightness(1.05); }
+pre.sample { background:var(--code); border:1px solid var(--line); border-radius:.6rem; padding:1rem 1.25rem; overflow-x:auto; font:.95rem/1.55 ui-monospace,"JetBrains Mono",monospace; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(15rem,1fr)); gap:1rem; padding:1rem 0 4rem; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:.75rem; padding:1.25rem; }
+.card h3 { margin:0 0 .4rem; } .card p { margin:0; color:var(--muted); }
+.install { font:.95rem ui-monospace,monospace; background:var(--code); padding:.15rem .45rem; border-radius:.3rem; }
+footer { border-top:1px solid var(--line); color:var(--muted); padding:1.5rem 0; font-size:.9rem; }
+.theme { display:inline-flex; border:1px solid var(--line); border-radius:.5rem; overflow:hidden; }
+.theme button { background:none; border:0; color:var(--muted); padding:.3rem .6rem; font:inherit; font-size:.85rem; cursor:pointer; }
+.theme button:hover { color:var(--fg); }
+.theme button[aria-pressed="true"] { background:var(--card); color:var(--fg); font-weight:600; }
+.tk-comment { color:var(--muted); font-style:italic; } .tk-doc { color:var(--muted); }
+.tk-string { color:#15803d; } .tk-number { color:#b45309; }
+.tk-control, .tk-decl, .tk-modifier, .tk-opword { color:var(--accent); font-weight:600; }
+.tk-atom { color:#b45309; } .tk-type, .tk-typedef { color:#0369a1; } .tk-fndef, .tk-fn { color:#a21caf; }
+.tk-punct { color:var(--muted); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --s:#86efac; --n:#fdba74; --t:#7dd3fc; --f:#f0abfc; } }
+:root[data-theme="dark"] { --s:#86efac; --n:#fdba74; --t:#7dd3fc; --f:#f0abfc; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tk-string { color:var(--s); } :root:not([data-theme="light"]) .tk-number, :root:not([data-theme="light"]) .tk-atom { color:var(--n); } :root:not([data-theme="light"]) .tk-type, :root:not([data-theme="light"]) .tk-typedef { color:var(--t); } :root:not([data-theme="light"]) .tk-fndef, :root:not([data-theme="light"]) .tk-fn { color:var(--f); } }
+:root[data-theme="dark"] .tk-string { color:var(--s); } :root[data-theme="dark"] .tk-number, :root[data-theme="dark"] .tk-atom { color:var(--n); } :root[data-theme="dark"] .tk-type, :root[data-theme="dark"] .tk-typedef { color:var(--t); } :root[data-theme="dark"] .tk-fndef, :root[data-theme="dark"] .tk-fn { color:var(--f); }

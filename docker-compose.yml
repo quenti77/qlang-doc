@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: qlang-doc-db
+    environment:
+      POSTGRES_DB: qlang_doc
+      POSTGRES_USER: qlang_doc
+      POSTGRES_PASSWORD: ${DOC_DB_PASSWORD:-qlang-doc-dev-only}
+    ports:
+      - "127.0.0.1:${DOC_DB_PORT:-5442}:5432"
+    volumes:
+      - qlang_doc_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qlang_doc -d qlang_doc"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  qlang_doc_data:

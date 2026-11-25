@@ -1,0 +1,9 @@
+[package]
+name = "qlang-doc"
+version = "0.1.0"
+entry = "main.q"
+qlang = "1.11"
+
+[dependencies]
+std = { git = "https://github.com/quenti77/qlang-std", version = "^1.2" }
+test = { git = "https://github.com/quenti77/qlang-test", version = "^1.0" }

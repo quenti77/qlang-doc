@@ -51,3 +51,6 @@ tr.line-add td { background:color-mix(in srgb, #16a34a 16%, var(--card)); } tr.l
 }
 .filters { display:flex; flex-wrap:wrap; gap:.6rem 1rem; align-items:end; margin:0 0 1rem; } .filters label { display:flex; flex-direction:column; gap:.2rem; font-size:.8rem; color:var(--muted); } .filters input, .filters select { font:inherit; font-size:.9rem; }
 @media (max-width:44rem) { .filters label { flex:1 1 40%; } .filters select, .filters input { width:100%; } }
+tr[hidden] { display:none; }
+.group-toggle td { padding:.2rem .5rem; } .group-toggle button { background:none; border:0; padding:.3rem 0; font:inherit; font-size:.82rem; color:var(--muted); cursor:pointer; } .group-toggle button::before { content:"▸"; display:inline-block; width:1rem; transition:transform .12s; } .group-toggle button[aria-expanded="true"]::before { transform:rotate(90deg); } .group-toggle button:hover { color:var(--accent); }
+tr.marker td { background:var(--card); }

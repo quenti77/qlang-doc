@@ -23,13 +23,17 @@
   <thead><tr><th>Quand</th><th>Qui</th><th>Action</th><th>Détail</th><th></th></tr></thead>
   <tbody>
   {% for r in rows %}
-    <tr>
+    {% if r.kind_toggle %}
+    <tr class="group-toggle"><td colspan="5"><button type="button" data-group="{{ r.group }}" aria-expanded="{{ r.expanded }}">{{ r.label }}</button></td></tr>
+    {% else %}
+    <tr {{ r.hidden }} data-in="{{ r.group }}" {% if r.marker %}class="marker"{% end %}>
       <td class="nowrap muted">{{ r.at }}</td>
       <td>{{ r.user }}</td>
       <td><strong>{{ r.action }}</strong><br><code class="muted">{{ r.action_key }}</code></td>
       <td>{{ r.summary }} {% if r.stats %}<span class="muted">({{ r.stats }})</span>{% end %}</td>
       <td class="right">{% if r.has_link %}<a class="btn small" href="{{ r.link }}">{{ r.link_label }}</a>{% end %}</td>
     </tr>
+    {% end %}
   {% else %}
     <tr><td class="muted">Rien dans le journal.</td></tr>
   {% end %}

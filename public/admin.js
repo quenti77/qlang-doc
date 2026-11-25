@@ -4,6 +4,14 @@
     if (message && !window.confirm(message)) event.preventDefault();
   });
 
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest && event.target.closest("button[data-group]");
+    if (!button) return;
+    var open = button.getAttribute("aria-expanded") !== "true";
+    button.setAttribute("aria-expanded", open ? "true" : "false");
+    document.querySelectorAll('tr[data-in="' + button.dataset.group + '"]').forEach(function (row) { row.hidden = !open; });
+  });
+
   var source = document.getElementById("markdown");
   var preview = document.getElementById("preview");
   if (!source || !preview) return;

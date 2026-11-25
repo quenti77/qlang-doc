@@ -122,7 +122,7 @@ end
 
 fun number_in(data: Json, key: string) -> int?
     let v = data.get(key)
-    if v == none or v.is_null() then none else v.as_number() as int end
+    if v == none or not v.is_number() then none else v.as_number() as int end
 end
 
 --" The link that a log line offers: the diff of an edit, the page, the release. --"

@@ -6,7 +6,9 @@
 {% if release.note %}<p>{{ release.note }}</p>{% end %}
 <div class="toolbar">
   <a class="btn" href="/fr/docs?v={{ release.label }}" target="_blank" rel="noopener">Voir sur le site</a>
-  {% if release.current %}{% else %}
+  {% if release.current %}
+  <form method="post" action="/admin/releases/unpublish" data-confirm="Dépublier la documentation ? Le site public n'affichera plus rien.">{{ csrf | raw }}<button class="btn danger" type="submit">Dépublier</button></form>
+  {% else %}
   <form method="post" action="/admin/releases/{{ release.id }}/publish" data-confirm="Publier cette version sur le site ?">{{ csrf | raw }}<button class="btn primary" type="submit">Publier cette version</button></form>
   {% end %}
   <form method="post" action="/admin/releases/{{ release.id }}/restore" data-confirm="Remettre les pages de cette version dans la copie de travail ? Chaque page modifiée reçoit une nouvelle révision.">{{ csrf | raw }}<button class="btn" type="submit">Rétablir dans la copie de travail</button></form>

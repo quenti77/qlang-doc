@@ -40,7 +40,9 @@
       <td>{{ r.note }}</td>
       <td class="right actions">
         <a class="btn small" href="/fr/docs?v={{ r.label }}" target="_blank" rel="noopener">Voir</a>
-        {% if r.current %}{% else %}
+        {% if r.current %}
+        <form method="post" action="/admin/releases/unpublish" data-confirm="Dépublier la documentation ? Le site public n'affichera plus rien.">{{ csrf | raw }}<button class="btn small danger" type="submit">Dépublier</button></form>
+        {% else %}
         <form method="post" action="/admin/releases/{{ r.id }}/publish" data-confirm="Publier la version {{ r.label }} sur le site ?">{{ csrf | raw }}<button class="btn small" type="submit">Publier</button></form>
         {% end %}
       </td>

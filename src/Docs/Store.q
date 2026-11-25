@@ -286,6 +286,10 @@ impl Store
         if r.is_empty() then none else col_text(r[0], "value").to_int() end
     end
 
+    public fun clear_current_release(self)
+        self.exec("DELETE FROM settings WHERE name = 'current_release'", [])
+    end
+
     public fun set_current_release(self, id: int)
         self.exec("DELETE FROM settings WHERE name = 'current_release'", [])
         self.exec("INSERT INTO settings (name, value) VALUES ('current_release', ?)", [text("{id}")])

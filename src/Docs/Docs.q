@@ -516,6 +516,19 @@ impl Docs
         Ok(true)
     end
 
+    --" Takes the published release offline: the public site shows "not published" until one is published again. --"
+    public fun unpublish(self, actor: int?) -> Result<bool, string>
+        let before = self.store.current_release_id()
+        if before == none then
+            return Err("Aucune version n'est publiée.")
+        end
+        let release = self.store.release(before)
+        self.store.clear_current_release()
+        let label = if release == none then "" else release.label end
+        self.store.log(actor, "release.unpublish", "release", before, "Version {label} dépubliée", Json.object({ "label": Json.string(label) }))
+        Ok(true)
+    end
+
     public fun delete_release(self, id: int, actor: int?) -> Result<bool, string>
         let release = self.store.release(id)
         if release == none then

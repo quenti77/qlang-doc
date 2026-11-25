@@ -104,6 +104,14 @@ impl ReleasePage
         Response.redirect("/admin/releases")
     end
 
+    #[web.Post("/unpublish")]
+    #[web.Guard("admin")]
+    public fun unpublish(self, req: Request) -> Response
+        let done = self.docs.unpublish(uid_of(req))
+        if done.is_err() then fail(req, done.unwrap_err()) else ok(req, "La documentation est dépubliée.") end
+        Response.redirect("/admin/releases")
+    end
+
     #[web.Post("/:id/restore")]
     #[web.Guard("admin")]
     public fun restore(self, req: Request, #[web.Path] id: int) -> Response

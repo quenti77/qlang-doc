@@ -2,6 +2,7 @@ import "@std/web/session.q" as sessions
 import Docs from "../Docs/Docs.q"
 import Package, PackageVersion from "../Registry/Models.q"
 import Registry from "../Registry/Registry.q"
+import links from "./Sections.q"
 import Views from "./Views.q"
 import when from "./Support.q"
 
@@ -99,10 +100,10 @@ impl PackagePages
             "versions": Json.array([]),
             "has_versions": Json.of(false),
             "query": Json.string(""),
-            "t": Json.of({ "docs": "Documentation", "reference": "Référence", "packages": "Paquets", "playground": "Playground", "search": "Rechercher dans la doc" }),
-            "docs_url": Json.string("/fr/docs"),
-            "ref_url": Json.string("/fr/ref"),
-            "other_url": Json.string("/en/docs"),
+            "t": Json.of({ "docs": "Documentation", "packages": "Paquets", "playground": "Playground", "search": "Rechercher dans la doc" }),
+            "docs_url": Json.string("/fr/{self.docs.default_section()}"),
+            "sections": Json.of(links(self.docs, "fr")),
+            "other_url": Json.string("/en/{self.docs.default_section()}"),
             "search_url": Json.string("/fr/search"),
         }
     end

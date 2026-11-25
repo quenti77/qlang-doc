@@ -69,6 +69,13 @@ struct Release
     public current: bool
 end
 
+--" A part of the site, above the folders: the guides, the reference... Its slug is the second part of the address. --"
+struct Section
+    public slug: string
+    public title: string
+    public position: int
+end
+
 --" A folder as a release kept it. --"
 struct SnapFolder
     public locale: string
@@ -109,4 +116,4 @@ struct AuditFilter
     public until: int?
 end
 
-export AuditFilter, Account, Folder, Page, PageRow, Revision, Release, SnapFolder, SnapPage, AuditEntry
+export Section, AuditFilter, Account, Folder, Page, PageRow, Revision, Release, SnapFolder, SnapPage, AuditEntry

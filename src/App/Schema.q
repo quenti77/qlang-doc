@@ -173,6 +173,25 @@ fun all_migrations() -> array<migrate.Migration>
             ],
             down: ["ALTER TABLE release_folders DROP COLUMN section", "ALTER TABLE folders DROP COLUMN section"],
         },
+        migrate.Migration {
+            id: "008_section_table",
+            up: [
+                "CREATE TABLE sections (
+                    slug VARCHAR(60) PRIMARY KEY,
+                    title VARCHAR(100) NOT NULL,
+                    position INTEGER NOT NULL,
+                    created_at BIGINT NOT NULL
+                )",
+                "ALTER TABLE folders ALTER COLUMN section TYPE VARCHAR(60)",
+                "ALTER TABLE release_folders ALTER COLUMN section TYPE VARCHAR(60)",
+                "UPDATE folders SET section = 'docs' WHERE section = 'doc'",
+                "UPDATE release_folders SET section = 'docs' WHERE section = 'doc'",
+                "ALTER TABLE folders ALTER COLUMN section SET DEFAULT 'docs'",
+                "ALTER TABLE release_folders ALTER COLUMN section SET DEFAULT 'docs'",
+                "INSERT INTO sections (slug, title, position, created_at) VALUES ('docs', 'Documentation', 1, 0), ('ref', 'Référence', 2, 0)",
+            ],
+            down: ["DROP TABLE sections"],
+        },
     ]
 end
 

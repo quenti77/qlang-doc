@@ -1,4 +1,4 @@
-import Account, Folder, Page, PageRow, Revision, Release, SnapFolder, SnapPage, AuditEntry, AuditFilter from "./Models.q"
+import Account, Folder, Page, PageRow, Revision, Release, SnapFolder, SnapPage, AuditEntry, AuditFilter, Section from "./Models.q"
 
 type Row = map<string, Json>
 
@@ -166,6 +166,27 @@ impl Store
 
     public fun update_folder(self, id: int, slug: string, title: string)
         self.exec("UPDATE folders SET slug = ?, title = ? WHERE id = ?", [text(slug), text(title), num(id)])
+    end
+
+    public fun sections(self) -> array<Section>
+        self.rows("SELECT * FROM sections ORDER BY position, slug", []).map(fun(row: Row) -> Section Section { slug: col_text(row, "slug"), title: col_text(row, "title"), position: col_int(row, "position") } end)
+    end
+
+    public fun create_section(self, slug: string, title: string)
+        let r = self.rows("SELECT COALESCE(MAX(position), 0) + 1 AS n FROM sections", [])
+        self.exec("INSERT INTO sections (slug, title, position, created_at) VALUES (?, ?, ?, ?)", [text(slug), text(title), num(col_int(r[0], "n")), num(self.now())])
+    end
+
+    public fun rename_section(self, slug: string, title: string)
+        self.exec("UPDATE sections SET title = ? WHERE slug = ?", [text(title), text(slug)])
+    end
+
+    public fun delete_section(self, slug: string)
+        self.exec("DELETE FROM sections WHERE slug = ?", [text(slug)])
+    end
+
+    public fun section_folder_count(self, slug: string) -> int
+        col_int(self.rows("SELECT COUNT(*) AS n FROM folders WHERE section = ? AND parent_id IS NULL", [text(slug)])[0], "n")
     end
 
     public fun set_folder_section(self, id: int, section: string)

@@ -1,6 +1,6 @@
 import "@markdown/markdown.q" as markdown
 import "@std/web/session.q" as sessions
-import Page, Account, SnapFolder, SnapPage from "./Models.q"
+import Page, Account, SnapFolder, SnapPage, Section from "./Models.q"
 import Store from "./Store.q"
 import folder_paths, page_path from "./Tree.q"
 import render_page from "../Markup/Render.q"
@@ -29,8 +29,8 @@ struct Change
 end
 
 let LOCALES = ["fr", "en"]
---" The two parts of the site: the guides and the reference. --"
-let SECTIONS = ["doc", "ref"]
+--" Addresses that a section may not take: they already mean something under `/fr/`. --"
+let RESERVED_SECTIONS = ["search", "fr", "en"]
 
 fun is_slug(text: string) -> bool
     if text == "" or text.len() > 100 then
@@ -206,6 +206,9 @@ impl Docs
             return Err("Cette adresse est déjà prise à cet endroit.")
         end
         let id = self.store.create_folder(locale, parent_id, slug, name)
+        if parent_id == none then
+            self.store.set_folder_section(id, self.default_section())
+        end
         self.store.log(actor, "folder.create", "folder", id, "Dossier « {name} » créé", Json.object({ "locale": Json.string(locale), "slug": Json.string(slug) }))
         Ok(id)
     end
@@ -228,13 +231,59 @@ impl Docs
         Ok(true)
     end
 
+    --" The section that holds what has none: the first one. --"
+    public fun default_section(self) -> string
+        let all = self.store.sections()
+        if all.is_empty() then "docs" else all[0].slug end
+    end
+
+    public fun create_section(self, title: string, slug_input: string, actor: int?) -> Result<string, string>
+        let name = title.trim()
+        if name == "" then
+            return Err("Le titre est obligatoire.")
+        end
+        let slug = if slug_input.trim() == "" then slug_of(name) else slug_input.trim() end
+        if not is_slug(slug) or slug.contains(".") then
+            return Err("L'adresse ne peut contenir que des minuscules, chiffres, - et _.")
+        end
+        if RESERVED_SECTIONS.contains(slug) or not self.store.sections().filter(fun(x: Section) -> bool x.slug == slug end).is_empty() then
+            return Err("Cette adresse est déjà prise.")
+        end
+        self.store.create_section(slug, name)
+        self.store.log(actor, "section.create", "section", none, "Section « {name} » créée", Json.object({ "slug": Json.string(slug) }))
+        Ok(slug)
+    end
+
+    public fun rename_section(self, slug: string, title: string, actor: int?) -> Result<bool, string>
+        let name = title.trim()
+        if name == "" then
+            return Err("Le titre est obligatoire.")
+        end
+        self.store.rename_section(slug, name)
+        self.store.log(actor, "section.update", "section", none, "Section « {name} » renommée", Json.object({ "slug": Json.string(slug) }))
+        Ok(true)
+    end
+
+    --" A section can only go when no folder is left in it, and the last one stays. --"
+    public fun delete_section(self, slug: string, actor: int?) -> Result<bool, string>
+        if self.store.section_folder_count(slug) > 0 then
+            return Err("Cette section contient encore des dossiers : déplace-les d'abord.")
+        end
+        if self.store.sections().len() <= 1 then
+            return Err("Il faut garder au moins une section.")
+        end
+        self.store.delete_section(slug)
+        self.store.log(actor, "section.delete", "section", none, "Section « {slug} » supprimée", Json.object({ "slug": Json.string(slug) }))
+        Ok(true)
+    end
+
     --" Puts a top-level folder, with everything under it, in the guides ("doc") or in the reference ("ref"). --"
     public fun set_section(self, id: int, section: string, actor: int?) -> Result<bool, string>
         let folder = self.store.folder(id)
         if folder == none then
             return Err("Dossier introuvable.")
         end
-        if not SECTIONS.contains(section) then
+        if self.store.sections().filter(fun(x: Section) -> bool x.slug == section end).is_empty() then
             return Err("Section inconnue.")
         end
         if folder.parent_id != none then
@@ -488,7 +537,7 @@ impl Docs
             end
             for f in folders do
                 let path = paths[f.id] ?? f.slug
-                folders_out.push(SnapFolder { locale: locale, path: path, title: f.title, position: f.position, section: sections[path.split("/")[0]] ?? "doc" })
+                folders_out.push(SnapFolder { locale: locale, path: path, title: f.title, position: f.position, section: sections[path.split("/")[0]] ?? "docs" })
             end
             for p in self.store.pages(locale) do
                 pages_out.push(SnapPage { locale: locale, path: page_path(p.folder_id, p.slug, paths), title: p.title, markdown: p.markdown, html: p.html, toc: p.toc, position: p.position })
@@ -669,4 +718,4 @@ fun diff_stats(old: string, new: string) -> Stats
     stats(diff(old, new))
 end
 
-export Docs, Rendered, Change, ImportResult, LOCALES, SECTIONS, slug_of, is_slug
+export Docs, Rendered, Change, ImportResult, LOCALES, slug_of, is_slug

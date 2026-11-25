@@ -1,5 +1,7 @@
 import Docs, LOCALES from "../Docs/Docs.q"
 import Release, SnapFolder, SnapPage from "../Docs/Models.q"
+import Section from "../Docs/Models.q"
+import links from "./Sections.q"
 import Views from "./Views.q"
 import highlight from "../Markup/Highlight.q"
 
@@ -85,7 +87,6 @@ end
 --" The words of the site's own interface, in each language. --"
 struct Strings
     public docs: string
-    public reference: string
     public packages: string
     public playground: string
     public search: string
@@ -99,9 +100,9 @@ end
 
 fun strings_of(locale: string) -> Strings
     if locale == "en" then
-        return Strings { docs: "Documentation", reference: "Reference", packages: "Packages", playground: "Playground", search: "Search the docs", previous: "Previous", next: "Next", on_this_page: "On this page", no_results: "Nothing found.", results: "results", footer: "qlang" }
+        return Strings { docs: "Documentation", packages: "Packages", playground: "Playground", search: "Search the docs", previous: "Previous", next: "Next", on_this_page: "On this page", no_results: "Nothing found.", results: "results", footer: "qlang" }
     end
-    Strings { docs: "Documentation", reference: "Référence", packages: "Paquets", playground: "Playground", search: "Rechercher dans la doc", previous: "Précédent", next: "Suivant", on_this_page: "Sur cette page", no_results: "Aucun résultat.", results: "résultats", footer: "qlang" }
+    Strings { docs: "Documentation", packages: "Paquets", playground: "Playground", search: "Rechercher dans la doc", previous: "Précédent", next: "Suivant", on_this_page: "Sur cette page", no_results: "Aucun résultat.", results: "résultats", footer: "qlang" }
 end
 
 --" The section of each top-level folder. --"
@@ -115,9 +116,9 @@ fun roots_of(folders: array<SnapFolder>) -> map<string, string>
     roots
 end
 
---" A page belongs to the section of its top-level folder; one at the very top is a guide. --"
-fun section_of(path: string, roots: map<string, string>) -> string
-    if not path.contains("/") then "doc" else roots[path.split("/")[0]] ?? "doc" end
+--" A page belongs to the section of its top-level folder; one at the very top goes to the first section. --"
+fun section_of(path: string, roots: map<string, string>, first: string) -> string
+    if not path.contains("/") then first else roots[path.split("/")[0]] ?? first end
 end
 
 fun parent_of(path: string) -> string
@@ -172,8 +173,9 @@ impl Public
 
     fun shell(self, locale: string, title: string, release: Release?, current_path: string) -> map<string, Json>
         let versions: array<VersionLink> = []
+        let first = self.docs.default_section()
         for r in self.docs.store.releases() do
-            let url = if r.current then "/{locale}/docs" else "/{locale}/docs?v={r.label}" end
+            let url = if r.current then "/{locale}/{first}" else "/{locale}/{first}?v={r.label}" end
             versions.push(VersionLink { label: r.label, url: url, current: release != none and release.id == r.id })
         end
         let shell: map<string, Json> = {
@@ -185,9 +187,9 @@ impl Public
             "has_versions": Json.of(versions.len() > 1),
             "t": Json.of(strings_of(locale)),
             "query": Json.string(""),
-            "docs_url": Json.string("/{locale}/docs"),
-            "ref_url": Json.string("/{locale}/ref"),
-            "other_url": Json.string("/{if locale == "fr" then "en" else "fr" end}/docs"),
+            "docs_url": Json.string("/{locale}/{first}"),
+            "sections": Json.of(links(self.docs, locale)),
+            "other_url": Json.string("/{if locale == "fr" then "en" else "fr" end}/{first}"),
             "search_url": Json.string("/{locale}/search"),
         }
         shell
@@ -201,7 +203,7 @@ impl Public
     public fun home(self, req: Request) -> Response
         let shell = self.shell("fr", "qlang", none, "")
         shell["sample"] = Json.string(highlight(SAMPLE))
-        self.views.public_page("public_home", shell, Json.object({ "sample": Json.string(highlight(SAMPLE)) }))
+        self.views.public_page("public_home", shell, Json.object({ "sample": Json.string(highlight(SAMPLE)), "docs_url": Json.string("/fr/{self.docs.default_section()}") }))
     end
 
     fun resolve(self, req: Request) -> Release?
@@ -216,7 +218,7 @@ impl Public
     public fun handle(self, req: Request) -> Response
         let segments = req.path.split("/").filter(fun(s: string) -> bool s != "" end)
         if segments.len() >= 2 and LOCALES.contains(segments[0]) then
-            if segments[1] == "docs" or segments[1] == "ref" then
+            if not self.docs.store.sections().filter(fun(s: Section) -> bool s.slug == segments[1] end).is_empty() then
                 return self.page(req, segments[0], segments[1], segments.slice(2, segments.len()).join("/"))
             end
             if segments[1] == "search" then
@@ -224,7 +226,7 @@ impl Public
             end
         end
         if segments.len() == 1 and segments[0] == "docs" then
-            return Response.redirect("/fr/docs")
+            return Response.redirect("/fr/{self.docs.default_section()}")
         end
         self.message("fr", "Page introuvable", "Cette page n'existe pas.", 404)
     end
@@ -237,11 +239,12 @@ impl Public
         let explicit = req.query["v"]
         let suffix = if explicit == none then "" else "?v={explicit}" end
         let base = "/{locale}/{area}"
-        let section = if area == "ref" then "ref" else "doc" end
+        let section = area
+        let first = self.docs.default_section()
         let every = self.docs.store.release_folders(release.id).filter(fun(f: SnapFolder) -> bool f.locale == locale end)
         let roots = roots_of(every)
         let folders = every.filter(fun(f: SnapFolder) -> bool f.section == section end)
-        let pages = self.docs.store.release_pages(release.id).filter(fun(p: SnapPage) -> bool p.locale == locale and section_of(p.path, roots) == section end)
+        let pages = self.docs.store.release_pages(release.id).filter(fun(p: SnapPage) -> bool p.locale == locale and section_of(p.path, roots, first) == section end)
         let nav: array<NavItem> = []
         let seq: array<SnapPage> = []
         ordered(folders, pages, "", nav, seq, path, base, suffix)
@@ -301,8 +304,9 @@ impl Public
             let explicit = req.query["v"]
             let suffix = if explicit == none then "" else "?v={explicit}" end
             let roots = roots_of(self.docs.store.release_folders(release.id).filter(fun(f: SnapFolder) -> bool f.locale == locale end))
+            let first = self.docs.default_section()
             for p in self.docs.store.search_release(release.id, locale, query, 30) do
-                hits.push(HitRow { title: p.title, url: "/{locale}/{if section_of(p.path, roots) == "ref" then "ref" else "docs" end}/{p.path}{suffix}", path: p.path.replace("/", " › "), excerpt: excerpt_of(p.markdown, query) })
+                hits.push(HitRow { title: p.title, url: "/{locale}/{section_of(p.path, roots, first)}/{p.path}{suffix}", path: p.path.replace("/", " › "), excerpt: excerpt_of(p.markdown, query) })
             end
         end
         let data = SearchData { query: query, hits: hits, has_hits: not hits.is_empty(), count: hits.len(), searched: query.len() >= 2, t: strings_of(locale) }

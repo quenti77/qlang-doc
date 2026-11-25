@@ -55,3 +55,4 @@ tr[hidden] { display:none; }
 .group-toggle td { padding:.2rem .5rem; } .group-toggle button { background:none; border:0; padding:.3rem 0; font:inherit; font-size:.82rem; color:var(--muted); cursor:pointer; } .group-toggle button::before { content:"▸"; display:inline-block; width:1rem; transition:transform .12s; } .group-toggle button[aria-expanded="true"]::before { transform:rotate(90deg); } .group-toggle button:hover { color:var(--accent); }
 tr.marker td { background:var(--card); }
 tr.changes > td { padding-top:0; }
+.tabs.sections { display:flex; flex-wrap:wrap; align-items:center; margin:0 0 1rem; } .tabs.sections summary { padding:.35rem .8rem; cursor:pointer; color:var(--muted); font-size:.9rem; list-style:none; } .tabs.sections .pop { position:relative; }

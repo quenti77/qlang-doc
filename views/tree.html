@@ -6,6 +6,34 @@
   </div>
 </div>
 
+<div class="tabs sections">
+  {% for t in tabs %}<a href="{{ t.url }}" {% if t.current %}aria-current="page"{% end %}>{{ t.label }}</a>{% end %}
+  <details class="pop">
+    <summary>＋ Section</summary>
+    <form method="post" action="/admin/sections" class="stack pop-body">
+      {{ csrf | raw }}
+      <input type="hidden" name="locale" value="{{ locale }}">
+      <label>Titre <input name="title" required placeholder="Tutoriels"></label>
+      <label>Adresse <input name="slug" placeholder="générée depuis le titre"></label>
+      <button class="btn primary" type="submit">Créer la section</button>
+    </form>
+  </details>
+  <details class="pop">
+    <summary>Gérer « {{ section_title }} »</summary>
+    <div class="pop-body">
+      <form method="post" action="/admin/sections/{{ section }}" class="stack">
+        {{ csrf | raw }}
+        <input type="hidden" name="locale" value="{{ locale }}">
+        <label>Titre <input name="title" value="{{ section_title }}" required></label>
+        <button class="btn primary" type="submit">Renommer</button>
+      </form>
+      <form method="post" action="/admin/sections/{{ section }}/delete" data-confirm="Supprimer cette section ? Elle doit être vide.">
+        {{ csrf | raw }}<input type="hidden" name="locale" value="{{ locale }}"><button class="btn danger" type="submit">Supprimer</button>
+      </form>
+    </div>
+  </details>
+</div>
+
 <div class="toolbar">
   <a class="btn primary" href="/admin/new-page?locale={{ locale }}">Nouvelle page</a>
   <a class="btn" href="/admin/import?locale={{ locale }}">Importer du Markdown</a>
@@ -20,7 +48,7 @@
         <select name="parent">{% for f in folders %}<option value="{{ f.value }}">{{ f.label }}</option>{% end %}</select>
       </label>
       <label>Section (dossier de premier niveau)
-        <select name="section"><option value="doc">Documentation</option><option value="ref">Référence</option></select>
+        <select name="section">{% for c in choices %}<option value="{{ c.value }}" {{ c.selected }}>{{ c.label }}</option>{% end %}</select>
       </label>
       <button class="btn primary" type="submit">Créer</button>
     </form>
@@ -28,7 +56,7 @@
 </div>
 
 {% if empty %}
-<p class="muted">Aucune page en {{ locale }}. Crée un dossier, une page, ou importe des fichiers Markdown.</p>
+<p class="muted">Rien dans « {{ section_title }} » en {{ locale }}. Crée un dossier, une page, ou importe des fichiers Markdown.</p>
 {% else %}
 <table class="list tree">
   <thead><tr><th>Titre</th><th>Adresse</th><th>Modifiée</th><th class="right">Actions</th></tr></thead>
@@ -36,7 +64,7 @@
   {% for r in rows %}
     {% if r.is_folder %}
     <tr class="folder">
-      <td style="{{ r.style }}"><strong>📁 {{ r.title }}</strong>{% if r.is_root %} <span class="badge">{{ r.section_label }}</span>{% end %}</td>
+      <td style="{{ r.style }}"><strong>📁 {{ r.title }}</strong></td>
       <td class="muted">/{{ r.path }}</td>
       <td></td>
       <td class="right actions">
@@ -55,7 +83,7 @@
             <form method="post" action="/admin/folders/{{ r.id }}/section" class="stack">
               {{ csrf | raw }}
               <label>Section
-                <select name="section"><option value="doc" {{ r.sel_doc }}>Documentation</option><option value="ref" {{ r.sel_ref }}>Référence</option></select>
+                <select name="section">{% for c in r.sections %}<option value="{{ c.value }}" {{ c.selected }}>{{ c.label }}</option>{% end %}</select>
               </label>
               <button class="btn" type="submit">Changer de section</button>
             </form>

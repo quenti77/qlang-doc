@@ -12,8 +12,7 @@
 <header class="top"><div class="wrap">
   <a class="brand" href="/">q<b>lang</b></a>
   <nav class="main">
-    <a href="{{ docs_url }}">{{ t.docs }}</a>
-    <a href="{{ ref_url }}">{{ t.reference }}</a>
+    {% for s in sections %}<a href="{{ s.url }}">{{ s.title }}</a>{% end %}
     <a href="/packages">{{ t.packages }}</a>
     <a href="/playground">{{ t.playground }}</a>
   </nav>

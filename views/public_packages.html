@@ -22,7 +22,9 @@
   {% else %}
   <p class="muted">Aucun paquet ne correspond.</p>
   {% end %}
+  {% if show_index %}
   <h2>Utiliser ce registre</h2>
   <p>Par défaut, qlang lit l'index du dépôt de qlang. Pour lire celui-ci :</p>
   <pre class="install-line">export QLANG_INDEX_URL={{ index_url }}</pre>
+  {% end %}
 </main>

@@ -2,7 +2,7 @@ import "@std/web/session.q" as sessions
 import Docs from "../Docs/Docs.q"
 import Package, PackageVersion from "../Registry/Models.q"
 import Registry from "../Registry/Registry.q"
-import base_shell from "./Viewer.q"
+import base_shell, viewer_of from "./Viewer.q"
 import Views from "./Views.q"
 import when from "./Support.q"
 
@@ -32,6 +32,7 @@ struct PackagesData
     public keywords: array<KeywordLink>
     public can_submit: bool
     public index_url: string
+    public show_index: bool
 end
 
 struct VersionRow
@@ -137,6 +138,7 @@ impl PackagePages
         let data = PackagesData {
             query: words, keyword: keyword, rows: found.map(fun(p: Package) -> PackageRow row_of(p) end), has_rows: not found.is_empty(), count: found.len(),
             keywords: keywords, can_submit: self.registry.options.submissions_open, index_url: "{self.base_url}/packages.json",
+            show_index: viewer_of(self.docs, req, self.signup_open).staff,
         }
         let shell = self.shell(req, "Paquets")
         shell["query"] = Json.string(words)

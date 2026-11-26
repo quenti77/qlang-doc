@@ -162,3 +162,15 @@
   });
   area.form.addEventListener("submit", function () { area.form.dataset.saving = "1"; });
 })();
+
+(function () {
+  var split = document.querySelector(".split[data-pane]");
+  var tabs = document.querySelectorAll(".split-tabs [data-pane]");
+  if (!split || !tabs.length) return;
+  tabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      split.dataset.pane = tab.dataset.pane;
+      tabs.forEach(function (t) { t.setAttribute("aria-selected", String(t === tab)); });
+    });
+  });
+})();

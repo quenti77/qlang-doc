@@ -7,15 +7,16 @@
   </div>
 </div>
 
-<div class="split">
-  <form method="post" action="/admin/pages/{{ id }}" class="stack">
+<div class="split-tabs" role="tablist" aria-label="Affichage"><button type="button" role="tab" data-pane="edit" aria-selected="true">Éditeur</button><button type="button" role="tab" data-pane="preview" aria-selected="false">Aperçu</button></div>
+<div class="split" data-pane="edit">
+  <form method="post" action="/admin/pages/{{ id }}" class="stack pane-edit">
     {{ csrf | raw }}
     <label>Titre <input name="title" value="{{ title }}" required></label>
     <label>Markdown <textarea id="markdown" name="markdown" class="editor" rows="26" spellcheck="false">{{ markdown }}</textarea></label>
     <label>Note de modification <input name="summary" placeholder="facultatif : ce qui change"></label>
     <div><button class="btn primary" type="submit">Enregistrer</button></div>
   </form>
-  <div>
+  <div class="pane-preview">
     <h2 class="small">Aperçu <span class="muted" id="preview-state"></span></h2>
     <div id="preview" class="prose card">{{ html | raw }}</div>
   </div>

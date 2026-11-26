@@ -26,7 +26,16 @@ textarea.editor { font:.9rem/1.55 ui-monospace,"JetBrains Mono",monospace; width
 details.pop { position:relative; display:inline-block; } details.pop > summary { list-style:none; cursor:pointer; } details.pop > summary::-webkit-details-marker { display:none; }
 .pop-body { position:absolute; right:0; z-index:5; min-width:17rem; margin-top:.35rem; padding:1rem; background:var(--card); border:1px solid var(--line); border-radius:.6rem; box-shadow:0 8px 24px rgb(0 0 0 / .15); text-align:left; display:flex; flex-direction:column; gap:.75rem; }
 details.more { margin-top:2rem; border:1px solid var(--line); border-radius:.6rem; padding:.6rem 1rem; background:var(--card); } details.more > summary { cursor:pointer; font-weight:600; } details.more .row { margin-top:1rem; }
-.split { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start; } @media (max-width:60rem) { .split { grid-template-columns:1fr; } }
+.split { display:grid; grid-template-columns:minmax(40%,1fr) minmax(0,1fr); gap:1.5rem; align-items:start; } .split > * { min-width:0; }
+.split-tabs { display:none; }
+@media (max-width:60rem) {
+  .split { grid-template-columns:minmax(0,1fr); }
+  .split-tabs { display:flex; gap:.25rem; margin:0 0 .8rem; border-bottom:1px solid var(--line); }
+  .split-tabs button { background:none; border:0; border-bottom:2px solid transparent; padding:.5rem .9rem; font:inherit; color:var(--muted); cursor:pointer; margin-bottom:-1px; }
+  .split-tabs button[aria-selected="true"] { color:var(--fg); font-weight:600; border-bottom-color:var(--accent); }
+  .split[data-pane="edit"] > .pane-preview, .split[data-pane="preview"] > .pane-edit { display:none; }
+  .split[data-pane="preview"] #preview { max-height:none; }
+}
 #preview { max-height:42rem; overflow:auto; }
 table.diff { width:100%; border-collapse:collapse; font:.85rem/1.5 ui-monospace,"JetBrains Mono",monospace; border:1px solid var(--line); background:var(--card); }
 table.diff td { padding:.05rem .5rem; vertical-align:top; } table.diff td.no { width:3rem; text-align:right; color:var(--muted); user-select:none; border-right:1px solid var(--line); } table.diff td.code { white-space:pre-wrap; word-break:break-word; } .mark { display:inline-block; width:1.2em; color:var(--muted); }

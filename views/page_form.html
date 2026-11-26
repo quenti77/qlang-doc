@@ -9,9 +9,10 @@
       <select name="folder">{% for f in folders %}<option value="{{ f.value }}" {% if f.selected %}selected{% end %}>{{ f.label }}</option>{% end %}</select>
     </label>
   </div>
-  <div class="split">
-    <label>Markdown <textarea id="markdown" name="markdown" class="editor" rows="22" spellcheck="false">{{ markdown }}</textarea></label>
-    <div>
+  <div class="split-tabs" role="tablist" aria-label="Affichage"><button type="button" role="tab" data-pane="edit" aria-selected="true">Éditeur</button><button type="button" role="tab" data-pane="preview" aria-selected="false">Aperçu</button></div>
+  <div class="split" data-pane="edit">
+    <label class="pane-edit">Markdown <textarea id="markdown" name="markdown" class="editor" rows="22" spellcheck="false">{{ markdown }}</textarea></label>
+    <div class="pane-preview">
       <h2 class="small">Aperçu <span class="muted" id="preview-state"></span></h2>
       <div id="preview" class="prose card"></div>
     </div>

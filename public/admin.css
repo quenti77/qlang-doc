@@ -2,7 +2,7 @@
 .admin h1 { font-size:1.6rem; margin:.2rem 0 1rem; } .admin h2 { font-size:1.15rem; margin:2rem 0 .75rem; } .admin h2.small { font-size:.95rem; margin:0 0 .5rem; }
 .admin .wrap { max-width:80rem; }
 .muted { color:var(--muted); } .nowrap { white-space:nowrap; } .right { text-align:right; }
-header.top .wrap form { margin:0; } header.top .main { flex:1; flex-wrap:wrap; }
+header.top .wrap form { margin:0; } 
 header.top nav.main a[aria-current="page"] { color:var(--fg); font-weight:600; }
 button.link { background:none; border:0; color:var(--muted); font:inherit; cursor:pointer; padding:0; } button.link:hover { color:var(--fg); text-decoration:underline; }
 .head { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; } .head h1 { margin-right:auto; }
@@ -32,7 +32,13 @@ table.diff { width:100%; border-collapse:collapse; font:.85rem/1.5 ui-monospace,
 table.diff td { padding:.05rem .5rem; vertical-align:top; } table.diff td.no { width:3rem; text-align:right; color:var(--muted); user-select:none; border-right:1px solid var(--line); } table.diff td.code { white-space:pre-wrap; word-break:break-word; } .mark { display:inline-block; width:1.2em; color:var(--muted); }
 tr.line-add td { background:color-mix(in srgb, #16a34a 16%, var(--card)); } tr.line-del td { background:color-mix(in srgb, #dc2626 16%, var(--card)); } tr.gap td { text-align:center; color:var(--muted); background:var(--code); }
 .add { color:#16a34a; font-weight:600; } .del { color:#dc2626; font-weight:600; } .pager { display:flex; gap:1rem; align-items:center; margin-top:1rem; }
-.admin header.top nav.main { order:10; flex:1 1 100%; gap:1.1rem; padding-bottom:.1rem; } .admin header.top .brand { margin-right:auto; }
+.admin header.top .wrap { height:auto; min-height:0; flex-wrap:wrap; gap:.25rem 1.25rem; padding-top:.6rem; padding-bottom:0; }
+.admin header.top .tools { margin-left:auto; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; justify-content:flex-end; font-size:.9rem; }
+.admin header.top .who { color:var(--fg); font-weight:600; }
+.admin header.top nav.main { order:10; flex:1 1 100%; flex-wrap:nowrap; gap:.15rem; overflow-x:auto; scrollbar-width:none; margin:0 -.6rem; }
+.admin header.top nav.main:empty { display:none; }
+.admin header.top nav.main a { white-space:nowrap; padding:.55rem .6rem .5rem; border-bottom:2px solid transparent; }
+.admin header.top nav.main a[aria-current="page"] { border-bottom-color:var(--accent); }
 .pop-body { max-width:calc(100vw - 2rem); }
 @media (max-width:44rem) {
   .admin .wrap { padding-left:.75rem; padding-right:.75rem; }

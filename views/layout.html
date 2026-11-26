@@ -14,6 +14,14 @@
 <body class="admin">
   <header class="top"><div class="wrap">
     <a class="brand" href="/admin">q<b>lang</b> <span class="muted">admin</span></a>
+    <div class="tools">
+      {% if login %}
+      <a class="muted" href="/fr/docs" target="_blank" rel="noopener">Voir le site ↗</a>
+      <span class="who">{{ login }}</span>
+      <form method="post" action="/admin/logout">{{ csrf | raw }}<button class="link" type="submit">Se déconnecter</button></form>
+      {% end %}
+      <span class="theme" role="group" aria-label="Thème"><button type="button" data-theme-set="light">Clair</button><button type="button" data-theme-set="dark">Sombre</button><button type="button" data-theme-set="system">Auto</button></span>
+    </div>
     {% if login %}
     <nav class="main">
       <a href="/admin" {% if nav_dashboard %}aria-current="page"{% end %}>Tableau de bord</a>
@@ -24,13 +32,7 @@
       {% if is_admin %}<a href="/admin/packages" {% if nav_packages %}aria-current="page"{% end %}>Paquets</a>{% end %}
       {% if is_admin %}<a href="/admin/accounts" {% if nav_accounts %}aria-current="page"{% end %}>Comptes</a>{% end %}
     </nav>
-    <a class="muted" href="/fr/docs" target="_blank" rel="noopener">Voir le site ↗</a>
-    <span class="muted">{{ login }}</span>
-    <form method="post" action="/admin/logout">{{ csrf | raw }}<button class="link" type="submit">Se déconnecter</button></form>
-    {% else %}
-    <nav class="main"></nav>
     {% end %}
-    <span class="theme" role="group" aria-label="Thème"><button type="button" data-theme-set="light">Clair</button><button type="button" data-theme-set="dark">Sombre</button><button type="button" data-theme-set="system">Auto</button></span>
   </div></header>
   <main class="wrap">
     {% if flash %}<div class="flash {% if flash_ok %}flash-ok{% else %}flash-error{% end %}" role="status">{{ flash }}</div>{% end %}

@@ -81,11 +81,3 @@
   source.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(render, 350); });
   if (source.value.trim() !== "") render();
 })();
-
-(function () {
-  document.querySelectorAll(".avatar[data-name]").forEach(function (a) { a.textContent = (a.dataset.name || "?").charAt(0); });
-  var menu = document.querySelector("details.user-menu");
-  if (!menu) return;
-  document.addEventListener("click", function (e) { if (menu.open && !menu.contains(e.target)) menu.open = false; });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") menu.open = false; });
-})();

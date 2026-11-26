@@ -12,7 +12,8 @@
 <body>
 <header class="top"><div class="wrap">
   <a class="brand" href="/">q<b>lang</b></a>
-  <nav class="main">
+  <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <nav class="main" id="main-nav">
     {% for s in sections %}<a href="{{ s.url }}">{{ s.title }}</a>{% end %}
     <a href="/packages">{{ t.packages }}</a>
     <a href="/playground">{{ t.playground }}</a>
@@ -26,19 +27,27 @@
   <a class="lang" href="{{ other_url }}">{{ other_locale | upper }}</a>
   <span class="account">
   {% if viewer.signed_in %}
-    <span class="who muted">{{ viewer.login }}</span>
-    {% if viewer.staff %}<a class="btn small" href="/admin">Admin</a>{% end %}
-    <form method="post" action="/account/logout" class="inline">{{ viewer.csrf | raw }}<button class="link" type="submit">Déconnexion</button></form>
   {% else %}
     <a href="/account/login">Connexion</a>
     {% if viewer.signup_open %}<a class="btn small" href="/account/register">Inscription</a>{% end %}
   {% end %}
   </span>
-  <span class="theme" role="group" aria-label="Thème"><button type="button" data-theme-set="light">Clair</button><button type="button" data-theme-set="dark">Sombre</button><button type="button" data-theme-set="system">Auto</button></span>
+  <span class="theme icons" role="group" aria-label="Thème"><button type="button" data-theme-set="light" title="Clair" aria-label="Clair"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button><button type="button" data-theme-set="dark" title="Sombre" aria-label="Sombre"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button><button type="button" data-theme-set="system" title="Auto" aria-label="Auto"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button></span>
+  {% if viewer.signed_in %}
+  <details class="user-menu">
+    <summary aria-label="Compte {{ viewer.login }}"><span class="avatar" data-name="{{ viewer.login }}"></span></summary>
+    <div class="user-body">
+      <p class="who"><span class="muted">Connecté</span><br>{{ viewer.login }}</p>
+      {% if viewer.staff %}<a href="/admin">Admin</a>{% end %}
+      <form method="post" action="/account/logout">{{ viewer.csrf | raw }}<button class="link" type="submit">Déconnexion</button></form>
+    </div>
+  </details>
+  {% end %}
 </div></header>
 {{ content | raw }}
 <footer><div class="wrap">qlang</div></footer>
 <script src="/theme-toggle.js"></script>
+<script src="/menu.js"></script>
 <script src="/docs.js"></script>
 </body>
 </html>

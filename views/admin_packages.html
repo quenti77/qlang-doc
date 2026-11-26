@@ -42,8 +42,8 @@
 <form method="post" action="/admin/packages" class="stack wide">
   {{ csrf | raw }}
   <div class="row">
-    <label class="grow">Nom <input name="name" pattern="[a-z0-9_-]+" required placeholder="json5"></label>
     <label class="grow">Adresse du dépôt (https) <input name="git" type="url" required placeholder="https://github.com/moi/json5"></label>
   </div>
+  <p class="muted">Le nom du paquet est lu dans le <code>qlang.toml</code> du dépôt par le worker.</p>
   <div><button class="btn primary" type="submit">Ajouter à l'index</button></div>
 </form>

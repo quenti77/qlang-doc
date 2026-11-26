@@ -65,7 +65,6 @@ end
 
 struct SubmitData
     public open: bool
-    public name: string
     public git: string
     public hosts: string
     public csrf: string
@@ -168,7 +167,7 @@ impl PackagePages
         let held = session.flash() ?? ""
         let error = held.strip_prefix("error|") ?? ""
         let data = SubmitData {
-            open: self.registry.options.submissions_open, name: session.old("name") ?? "", git: session.old("git") ?? "", hosts: self.registry.options.hosts.join(", "),
+            open: self.registry.options.submissions_open, git: session.old("git") ?? "", hosts: self.registry.options.hosts.join(", "),
             csrf: session.csrf_field(), sent: held == "sent", error: error, has_error: error != "",
         }
         self.views.public_page("public_submit", self.shell(req, "Proposer un paquet"), Json.of(data))
@@ -178,9 +177,9 @@ impl PackagePages
         let session = sessions.session_of(req)
         let form = req.form()
         let fields: map<string, string> = if form.is_ok() then form.unwrap() else {} end
-        let made = self.registry.submit(fields["name"] ?? "", fields["git"] ?? "")
+        let made = self.registry.submit(fields["git"] ?? "")
         if made.is_err() then
-            session.flash_input({ "name": fields["name"] ?? "", "git": fields["git"] ?? "" })
+            session.flash_input({ "git": fields["git"] ?? "" })
             session.flash_set("error|{made.unwrap_err()}")
             return Response.redirect("/packages/submit")
         end

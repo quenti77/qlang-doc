@@ -96,6 +96,10 @@ impl PackageStore
         col_int(r[0], "id")
     end
 
+    public fun set_name(self, id: int, name: string)
+        self.exec("UPDATE packages SET name = ? WHERE id = ?", [text(name), num(id)])
+    end
+
     public fun set_status(self, id: int, status: string, reason: string)
         self.exec("UPDATE packages SET status = ?, removed_reason = ? WHERE id = ?", [text(status), text(reason), num(id)])
     end

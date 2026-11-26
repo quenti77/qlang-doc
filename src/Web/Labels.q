@@ -10,6 +10,7 @@ let ACTION_LABELS: map<string, string> = {
     "folder.section": "Section du dossier changée",
     "folder.update": "Dossier modifié",
     "package.add": "Paquet ajouté",
+    "package.rename": "Paquet renommé (qlang.toml)",
     "package.approve": "Paquet approuvé",
     "package.delete": "Paquet supprimé",
     "package.reject": "Paquet refusé",

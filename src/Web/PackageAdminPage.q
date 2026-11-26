@@ -112,12 +112,12 @@ impl PackageAdminPage
     #[web.Post("")]
     public fun add(self, req: Request) -> Response
         let form = form_of(req)
-        let made = self.registry.add(form["name"] ?? "", form["git"] ?? "", uid_of(req))
+        let made = self.registry.add(form["git"] ?? "", uid_of(req))
         if made.is_err() then
             fail(req, made.unwrap_err())
             return Response.redirect("/admin/packages?status=listed")
         end
-        ok(req, "Paquet ajouté : le worker va lire son dépôt.")
+        ok(req, "Paquet ajouté : le worker va lire son dépôt et prendre le nom de son qlang.toml.")
         Response.redirect("/admin/packages/{made.unwrap()}")
     end
 

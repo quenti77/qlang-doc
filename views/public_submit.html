@@ -3,10 +3,9 @@
   {% if open %}
     {% if sent %}<div class="flash flash-ok">Merci ! Ta proposition est dans la file : elle sera relue avant d'apparaître dans le registre.</div>{% end %}
     {% if has_error %}<div class="flash flash-error">{{ error }}</div>{% end %}
-    <p class="muted">Un paquet est un dépôt git public avec un <code>qlang.toml</code> (<code>description</code>, <code>license</code>) et une étiquette <code>vX.Y.Z</code>. Le nom est donné au premier arrivé.</p>
+    <p class="muted">Un paquet est un dépôt git public avec un <code>qlang.toml</code> (<code>description</code>, <code>license</code>) et une étiquette <code>vX.Y.Z</code>. Le nom du paquet est lu dans ce <code>qlang.toml</code> (champ <code>name</code>).</p>
     <form method="post" action="/packages/submit" class="stack">
       {{ csrf | raw }}
-      <label>Nom <input name="name" value="{{ name }}" pattern="[a-z0-9_-]+" maxlength="64" required placeholder="json5"></label>
       <label>Adresse du dépôt <input name="git" value="{{ git }}" type="url" required placeholder="https://github.com/moi/json5"></label>
       <p class="muted">Hôtes acceptés : {{ hosts }}.</p>
       <button class="btn primary" type="submit">Proposer</button>

@@ -94,6 +94,15 @@ fun check_git_url(raw: string, hosts: array<string>) -> Result<string, string>
     Ok("https://" + host + "/" + bare)
 end
 
+--" A repository segment as a package name: lower case, anything else becomes `-`. --"
+fun clean_name(raw: string) -> string
+    let out = ""
+    for c in (raw.strip_suffix(".git") ?? raw).lower().chars() do
+        out = out + (if c.is_digit() or c.is_alpha() or c == "-" or c == "_" then c else "-" end)
+    end
+    out
+end
+
 fun text_at(json: Json, key: string) -> string
     let v = json.get(key)
     if v == none or v.is_null() then "" else v.as_string() end
@@ -104,20 +113,17 @@ impl Registry
         Registry { log: log, packages: PackageStore.new(log.db), options: options }
     end
 
-    fun add_package(self, name_input: string, url_input: string, status: string, actor: int?, hosts: array<string>) -> Result<int, string>
-        let name = name_input.trim()
-        if not valid_name(name) then
-            return Err("Le nom ne peut contenir que des minuscules, chiffres, - et _ (64 caractères au plus).")
-        end
+    fun add_package(self, url_input: string, status: string, actor: int?, hosts: array<string>) -> Result<int, string>
         let url = check_git_url(url_input, hosts)
         if url.is_err() then
             return Err(url.unwrap_err())
         end
-        if self.packages.package_by_name(name) != none then
-            return Err("Ce nom est déjà pris.")
-        end
         if self.packages.package_by_git(url.unwrap()) != none then
             return Err("Ce dépôt est déjà référencé.")
+        end
+        let name = self.provisional_name(url.unwrap())
+        if name == "" then
+            return Err("Aucun nom ne peut être tiré de cette adresse : un nom est déjà pris ou invalide.")
         end
         let id = self.packages.create_package(name, url.unwrap(), status)
         let what = if status == "pending" then "Paquet {name} proposé" else "Paquet {name} ajouté" end
@@ -125,17 +131,30 @@ impl Registry
         Ok(id)
     end
 
+    --" The name a package has until its `qlang.toml` is read: the repository name, or `owner-repository` when it is taken. Empty when nothing fits. --"
+    fun provisional_name(self, url: string) -> string
+        let parts = url.substring(8, url.len()).split("/").filter(fun(p: string) -> bool p != "" end)
+        let repo = clean_name(parts[parts.len() - 1])
+        let owner = clean_name(parts[parts.len() - 2])
+        for candidate in [repo, "{owner}-{repo}"] do
+            if valid_name(candidate) and self.packages.package_by_name(candidate) == none then
+                return candidate
+            end
+        end
+        ""
+    end
+
     --" Anyone's proposal: it waits for a moderator. Refused when submissions are closed. --"
-    public fun submit(self, name: string, url: string) -> Result<int, string>
+    public fun submit(self, url: string) -> Result<int, string>
         if not self.options.submissions_open then
             return Err("Les propositions de paquets sont fermées.")
         end
-        self.add_package(name, url, "pending", none, self.options.hosts)
+        self.add_package(url, "pending", none, self.options.hosts)
     end
 
     --" A moderator adds a package straight to the index (any public https host). --"
-    public fun add(self, name: string, url: string, actor: int?) -> Result<int, string>
-        self.add_package(name, url, "listed", actor, [])
+    public fun add(self, url: string, actor: int?) -> Result<int, string>
+        self.add_package(url, "listed", actor, [])
     end
 
     fun load(self, id: int) -> Result<Package, string>
@@ -303,13 +322,28 @@ impl Registry
         if section == none then
             return self.fail(p, "qlang.toml n'a pas de section [package].")
         end
+        let declared = text_at(section, "name").trim()
+        if declared == "" then
+            return self.fail(p, "qlang.toml : [package] doit avoir un champ name.")
+        end
+        if not valid_name(declared) then
+            return self.fail(p, "qlang.toml : le nom « {declared} » ne peut contenir que des minuscules, chiffres, - et _ (64 caractères au plus).")
+        end
+        let other = self.packages.package_by_name(declared)
+        if other != none and other.id != id then
+            return self.fail(p, "Le nom {declared} est déjà pris par un autre paquet ({other.git_url}).")
+        end
         let keywords = Json.to<array<string>>(section.get("keywords") ?? Json.array([]))
         let readme = snap.unwrap().readme
         let shown = if readme.len() > 200000 then readme.substring(0, 200000) else readme end
+        if declared != p.name then
+            self.packages.set_name(id, declared)
+            self.log.log(none, "package.rename", "package", id, "Paquet {p.name} nommé {declared} d'après son qlang.toml", Json.object({ "from": Json.string(p.name), "to": Json.string(declared) }))
+        end
         self.packages.set_synced(id, text_at(section, "description"), text_at(section, "license"), if keywords.is_ok() then keywords.unwrap() else [] end, render_page(shown).html, latest)
         self.packages.set_version_requirement(id, latest, text_at(section, "qlang"))
-        let warning = if text_at(section, "name") != "" and text_at(section, "name") != p.name then "Le nom dans qlang.toml ({text_at(section, "name")}) diffère du nom référencé ({p.name})." else "" end
-        self.log.log(none, "package.sync", "package", id, "Paquet {p.name} lu : {latest} ({added} nouvelle(s) version(s))", Json.object({ "name": Json.string(p.name), "latest": Json.string(latest), "added": Json.number(added as float) }))
+        self.log.log(none, "package.sync", "package", id, "Paquet {declared} lu : {latest} ({added} nouvelle(s) version(s))", Json.object({ "name": Json.string(declared), "latest": Json.string(latest), "added": Json.number(added as float) }))
+        let warning = if declared != p.name then "Nom pris dans qlang.toml : {declared} (était {p.name})." else "" end
         Ok(SyncReport { added: added, latest: latest, warning: warning })
     end
 
@@ -332,7 +366,7 @@ impl Registry
     public fun index_json(self) -> string
         let entries: map<string, Json> = {}
         for p in self.packages.packages("", "", "") do
-            if p.status == "pending" then
+            if p.status == "pending" or (p.status == "listed" and p.synced_at == 0) then
                 continue
             end
             let yanked = self.packages.versions(p.id).filter(fun(v: PackageVersion) -> bool v.yanked end).map(fun(v: PackageVersion) -> string v.version end)

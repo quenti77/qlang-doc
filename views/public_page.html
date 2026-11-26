@@ -2,7 +2,7 @@
   <aside class="side" aria-label="Navigation">
     <details class="side-details" open>
     <summary>Navigation</summary>
-    <div class="side-tools"><button type="button" data-fold="open">Tout déplier</button><button type="button" data-fold="close">Tout replier</button></div>
+    <div class="side-tools" role="group" aria-label="Plan"><button type="button" data-fold="open" title="Tout déplier" aria-label="Tout déplier"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7l5 5 5-5M7 13l5 5 5-5"/></svg></button><button type="button" data-fold="close" title="Tout replier" aria-label="Tout replier"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11l5-5 5 5M7 17l5-5 5 5"/></svg></button></div>
     <nav>
     {% for n in nav %}
       {% if n.is_folder %}<button type="button" class="side-title" data-path="{{ n.path }}" aria-expanded="{{ n.expanded }}" style="{{ n.style }}" {{ n.hidden }}>{{ n.title }}</button>

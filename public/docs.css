@@ -61,3 +61,19 @@ input, select { font:inherit; color:var(--fg); background:var(--card); border:1p
 .side-title::before { content:"▸"; display:inline-block; width:1rem; transition:transform .12s; } .side-title[aria-expanded="true"]::before { transform:rotate(90deg); } .side-title:hover { color:var(--fg); }
 .side [hidden] { display:none; }
 .side-tools { display:flex; gap:.5rem; margin:0 0 .6rem; } .side-tools button { background:none; border:0; padding:0; font:inherit; font-size:.78rem; color:var(--muted); cursor:pointer; text-decoration:underline; } .side-tools button:hover { color:var(--accent); }
+.docs { gap:3.5rem; padding-top:2.5rem; padding-bottom:6rem; }
+.docs .wrap, .docs.wrap { padding-left:1.5rem; padding-right:1.5rem; }
+.side { padding-right:1.25rem; border-right:1px solid var(--line); } .side a, .toc a { padding:.35rem .65rem; line-height:1.4; } .side-title { margin:1.1rem 0 .3rem; }
+.toc { padding-left:.25rem; } .toc a { padding-left:.75rem; border-left:2px solid var(--line); border-radius:0; }
+.docs .prose { max-width:50rem; font-size:1.02rem; line-height:1.8; }
+.docs .prose p, .docs .prose ul, .docs .prose ol, .docs .prose blockquote, .docs .prose .markdown-alert { margin-bottom:1.25rem; } .docs .prose pre, .docs .prose .code-block { margin-top:1.5rem; margin-bottom:1.75rem; } .docs .prose .code-block > pre { margin:0; }
+.docs .prose h1 { margin-bottom:1.5rem; } .docs .prose h2 { margin:3rem 0 1rem; } .docs .prose h3 { margin:2.2rem 0 .7rem; } .docs .prose li { margin:.3rem 0; }
+.crumbs { margin-bottom:1rem; }
+@media (max-width:64rem) { .docs { gap:2.5rem; } }
+@media (max-width:44rem) { .docs { gap:1.5rem; padding-top:1.25rem; } .side { padding-right:0; border-right:0; } .docs .prose { font-size:1rem; } .docs .prose h2 { margin-top:2.2rem; } }
+.wrap.docs { max-width:88rem; } .docs { grid-template-columns:15rem minmax(0,1fr) 12rem; gap:3rem; }
+@media (max-width:64rem) { .docs { grid-template-columns:14rem minmax(0,1fr); } }
+@media (max-width:44rem) { .docs { grid-template-columns:minmax(0,1fr); } }
+.side-tools { display:inline-flex; gap:0; margin:0 0 .8rem; border:1px solid var(--line); border-radius:.5rem; overflow:hidden; }
+.side-tools button { display:inline-flex; align-items:center; justify-content:center; width:2rem; height:1.8rem; padding:0; background:transparent; border:0; color:var(--muted); text-decoration:none; cursor:pointer; } .side-tools button + button { border-left:1px solid var(--line); } .side-tools button:hover { color:var(--accent); background:var(--code); }
+@media (max-width:44rem) { .code-block > pre { padding-right:6.4rem; } }

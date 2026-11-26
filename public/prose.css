@@ -9,3 +9,20 @@
 .markdown-alert { border-left:4px solid var(--accent); background:var(--code); border-radius:.4rem; padding:.6rem 1rem; margin:0 0 1rem; } .markdown-alert p { margin:.2rem 0; } .markdown-alert-title { font-weight:700; }
 .markdown-alert-warning, .markdown-alert-caution { border-left-color:#d97706; } .markdown-alert-tip { border-left-color:#16a34a; } .markdown-alert-important { border-left-color:#7c3aed; }
 .footnotes { font-size:.9rem; color:var(--muted); } .prose input[type="checkbox"] { margin-right:.4rem; }
+.markdown-alert { --tone:#2563eb; margin:0 0 1rem; padding:.7rem 1rem; border-left:4px solid var(--tone); border-radius:.4rem; background:color-mix(in srgb, var(--tone) 12%, var(--card, transparent)); } .markdown-alert > :last-child { margin-bottom:0; }
+.markdown-alert-title { margin:0 0 .3rem; font-weight:700; color:var(--tone); } .markdown-alert-title::before { content:"Info"; }
+.markdown-alert-note { --tone:#2563eb; } .markdown-alert-tip { --tone:#16a34a; } .markdown-alert-warning { --tone:#d97706; } .markdown-alert-caution { --tone:#dc2626; } .markdown-alert-important { --tone:#7c3aed; }
+.markdown-alert-tip .markdown-alert-title::before { content:"Success"; } .markdown-alert-warning .markdown-alert-title::before { content:"Warning"; } .markdown-alert-caution .markdown-alert-title::before { content:"Danger"; } .markdown-alert-important .markdown-alert-title::before { content:"Important"; }
+:lang(fr) .markdown-alert-tip .markdown-alert-title::before { content:"Succès"; } :lang(fr) .markdown-alert-warning .markdown-alert-title::before { content:"Attention"; }
+.code-block { position:relative; } .code-block > pre { margin-bottom:1rem; }
+.code-tools { position:absolute; top:.45rem; right:.45rem; display:flex; gap:.25rem; opacity:.55; transition:opacity .12s; } .code-block:hover .code-tools, .code-block:focus-within .code-tools, .code-tools:hover { opacity:1; }
+.code-tools button { width:1.9rem; height:1.9rem; display:inline-flex; align-items:center; justify-content:center; padding:0; border:1px solid var(--line); border-radius:.4rem; background:var(--card); color:var(--muted); cursor:pointer; } .code-tools button:hover { color:var(--accent); border-color:var(--accent); } .code-tools button.done { color:#16a34a; border-color:#16a34a; }
+dialog.code-modal { width:min(96vw,72rem); max-height:90vh; padding:0; border:1px solid var(--line); border-radius:.7rem; background:var(--card); color:var(--fg); box-shadow:0 20px 60px rgb(0 0 0 / .4); } dialog.code-modal::backdrop { background:rgb(0 0 0 / .6); }
+.code-modal header { display:flex; align-items:center; justify-content:flex-end; gap:.3rem; padding:.5rem .6rem; border-bottom:1px solid var(--line); } .code-modal header button { width:2rem; height:2rem; display:inline-flex; align-items:center; justify-content:center; padding:0; border:1px solid var(--line); border-radius:.4rem; background:transparent; color:var(--muted); cursor:pointer; } .code-modal header button:hover { color:var(--accent); border-color:var(--accent); } .code-modal header button.done { color:#16a34a; border-color:#16a34a; }
+.code-modal pre { margin:0; padding:1rem 1.2rem; max-height:calc(90vh - 3.2rem); overflow:auto; font-size:1rem; border:0; border-radius:0 0 .7rem .7rem; }
+.prose pre { --pad:1.1rem; } .code-modal pre { --pad:1.2rem; }
+pre .line { display:block; } pre .line:empty::after { content:" "; }
+.code-numbers pre code { counter-reset:ln; } .code-numbers pre .line::before { counter-increment:ln; content:counter(ln); display:inline-block; min-width:2.2em; margin-right:1.1em; text-align:right; color:var(--muted); opacity:.55; user-select:none; }
+pre .line.diff-add, pre .line.diff-del, pre .line.diff-hunk { margin:0 calc(-1 * var(--pad)); padding:0 var(--pad); }
+pre .line.diff-add { background:color-mix(in srgb, #16a34a 18%, transparent); } pre .line.diff-del { background:color-mix(in srgb, #dc2626 18%, transparent); } pre .line.diff-hunk { background:color-mix(in srgb, #2563eb 14%, transparent); color:var(--muted); }
+.code-tools button[aria-pressed="true"], .code-modal header button[aria-pressed="true"] { color:var(--accent); border-color:var(--accent); }

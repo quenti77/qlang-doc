@@ -157,7 +157,7 @@ impl PackagePages
             latest: p.latest_version, has_latest: p.latest_version != "", readme_html: p.readme_html, has_readme: p.readme_html != "",
             versions: versions, has_versions: not versions.is_empty(), keywords: p.keywords, removed: p.status == "removed", removed_reason: p.removed_reason,
             synced: if p.synced_at > 0 then when(p.synced_at) else "" end, install: "qlang add {p.name}",
-            pinned: "{p.name} = \{ git = \"{p.git_url}\", version = \"^{(p.latest_version.strip_prefix("v") ?? "1.0.0")}\" \}",
+            pinned: "{(p.name.split("/").last() ?? p.name)} = \{ git = \"{p.git_url}\", version = \"^{(p.latest_version.strip_prefix("v") ?? "1.0.0")}\" \}",
         }
         self.views.public_page("public_package", self.shell(req, p.name), Json.of(data))
     end

@@ -27,7 +27,7 @@ struct Registry
     public options: Options
 end
 
-fun valid_name(name: string) -> bool
+fun valid_segment(name: string) -> bool
     if name == "" or name.len() > 64 then
         return false
     end
@@ -37,6 +37,15 @@ fun valid_name(name: string) -> bool
         end
     end
     true
+end
+
+--" A registry name: `vendor/package`, or a flat name kept from before vendors existed. --"
+fun valid_name(name: string) -> bool
+    let parts = name.split("/")
+    if parts.len() == 1 then
+        return valid_segment(name)
+    end
+    parts.len() == 2 and valid_segment(parts[0]) and valid_segment(parts[1])
 end
 
 fun is_address(host: string) -> bool
@@ -103,6 +112,21 @@ fun clean_name(raw: string) -> string
     out
 end
 
+fun path_parts(url: string) -> array<string>
+    url.substring(8, url.len()).split("/").filter(fun(p: string) -> bool p != "" end)
+end
+
+--" The owner segment of a repository address, as a name segment: it is the vendor the package may use. --"
+fun owner_of(url: string) -> string
+    let parts = path_parts(url)
+    clean_name(parts[parts.len() - 2])
+end
+
+fun repo_of(url: string) -> string
+    let parts = path_parts(url)
+    parts[parts.len() - 1]
+end
+
 fun text_at(json: Json, key: string) -> string
     let v = json.get(key)
     if v == none or v.is_null() then "" else v.as_string() end
@@ -131,17 +155,10 @@ impl Registry
         Ok(id)
     end
 
-    --" The name a package has until its `qlang.toml` is read: the repository name, or `owner-repository` when it is taken. Empty when nothing fits. --"
+    --" The name a package has until its `qlang.toml` is read: `owner/repository` of its address. Empty when it is invalid or taken. --"
     fun provisional_name(self, url: string) -> string
-        let parts = url.substring(8, url.len()).split("/").filter(fun(p: string) -> bool p != "" end)
-        let repo = clean_name(parts[parts.len() - 1])
-        let owner = clean_name(parts[parts.len() - 2])
-        for candidate in [repo, "{owner}-{repo}"] do
-            if valid_name(candidate) and self.packages.package_by_name(candidate) == none then
-                return candidate
-            end
-        end
-        ""
+        let name = "{owner_of(url)}/{clean_name(repo_of(url))}"
+        if valid_name(name) and self.packages.package_by_name(name) == none then name else "" end
     end
 
     --" Anyone's proposal: it waits for a moderator. Refused when submissions are closed. --"
@@ -150,6 +167,21 @@ impl Registry
             return Err("Les propositions de paquets sont fermées.")
         end
         self.add_package(url, "pending", none, self.options.hosts)
+    end
+
+    --" Imports a package that keeps a flat name from before vendors existed (see `tools/import-index.q`); its `qlang.toml` must declare the same name. --"
+    public fun add_legacy(self, name: string, url: string) -> Result<int, string>
+        if not valid_name(name) or self.packages.package_by_name(name) != none then
+            return Err("Nom invalide ou déjà pris.")
+        end
+        let checked = check_git_url(url, [])
+        if checked.is_err() then
+            return Err(checked.unwrap_err())
+        end
+        if self.packages.package_by_git(checked.unwrap()) != none then
+            return Err("Ce dépôt est déjà référencé.")
+        end
+        Ok(self.packages.create_package(name, checked.unwrap(), "listed"))
     end
 
     --" A moderator adds a package straight to the index (any public https host). --"
@@ -327,7 +359,15 @@ impl Registry
             return self.fail(p, "qlang.toml : [package] doit avoir un champ name.")
         end
         if not valid_name(declared) then
-            return self.fail(p, "qlang.toml : le nom « {declared} » ne peut contenir que des minuscules, chiffres, - et _ (64 caractères au plus).")
+            return self.fail(p, "qlang.toml : le nom « {declared} » doit être de la forme vendeur/paquet (minuscules, chiffres, - et _, 64 caractères au plus par partie).")
+        end
+        if declared != p.name then
+            if not declared.contains("/") then
+                return self.fail(p, "qlang.toml : le nom doit être de la forme vendeur/paquet.")
+            end
+            if declared.split("/")[0] != owner_of(p.git_url) then
+                return self.fail(p, "qlang.toml : le vendeur de {declared} doit être le propriétaire du dépôt ({owner_of(p.git_url)}).")
+            end
         end
         let other = self.packages.package_by_name(declared)
         if other != none and other.id != id then

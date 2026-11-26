@@ -130,6 +130,7 @@ fun build(db: Db, config: Config) -> web.App
     app.get("/packages/submit", fun(req: Request) -> Response packages.submit_form(req) end)
     app.post("/packages/submit", fun(req: Request) -> Response packages.submit(req) end)
     app.get("/packages/:name", fun(req: Request) -> Response packages.show(req, req.params.get("name", "")) end)
+    app.get("/packages/:vendor/:name", fun(req: Request) -> Response packages.show(req, req.params.get("vendor", "") + "/" + req.params.get("name", "")) end)
     app.get("/account/login", fun(req: Request) -> Response members.login_form(req) end)
     app.post("/account/login", fun(req: Request) -> Response members.login(req) end)
     app.get("/account/register", fun(req: Request) -> Response members.register_form(req) end)

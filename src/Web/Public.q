@@ -70,6 +70,13 @@ struct HitRow
     public excerpt: string
 end
 
+--" What the search box asks for (`?format=json&limit=5`): the first hits, and whether there are more. --"
+struct SearchHits
+    public query: string
+    public hits: array<HitRow>
+    public more: bool
+end
+
 struct SearchData
     public query: string
     public hits: array<HitRow>
@@ -148,6 +155,12 @@ fun ordered(folders: array<SnapFolder>, pages: array<SnapPage>, parent: string, 
         out.push(NavItem { is_folder: false, title: p.title, url: "{base}/{p.path}{suffix}", style: "padding-left:{depth_of(p.path) + 0.5}rem", active: p.path == active, path: p.path, hidden: hidden_attr(parent, active), expanded: "false" })
         seq.push(p)
     end
+end
+
+--" A whole number of the query string, kept between `low` and `high`, or `fallback`. --"
+fun number_or(raw: string, fallback: int, low: int, high: int) -> int
+    let n = raw.trim().to_int() ?? fallback
+    if n < low then low else if n > high then high else n end end
 end
 
 fun excerpt_of(markdown: string, words: string) -> string
@@ -317,14 +330,21 @@ impl Public
         let release = self.resolve(req)
         let query = (req.query["q"] ?? "").trim()
         let hits: array<HitRow> = []
+        let as_json = (req.query["format"] ?? "") == "json"
+        let wanted = if as_json then number_or(req.query["limit"] ?? "", 5, 1, 10) + 1 else 30 end
         if release != none and query.len() >= 2 then
             let explicit = req.query["v"]
             let suffix = if explicit == none then "" else "?v={explicit}" end
             let roots = roots_of(self.docs.store.release_folders(release.id).filter(fun(f: SnapFolder) -> bool f.locale == locale end))
             let first = self.docs.default_section()
-            for p in self.docs.store.search_release(release.id, locale, query, 30) do
+            for p in self.docs.store.search_release(release.id, locale, query, wanted) do
                 hits.push(HitRow { title: p.title, url: "/{locale}/{section_of(p.path, roots, first)}/{p.path}{suffix}", path: p.path.replace("/", " › "), excerpt: excerpt_of(p.markdown, query) })
             end
+        end
+        if as_json then
+            let shown = wanted - 1
+            let body = SearchHits { query: query, hits: if hits.len() > shown then hits.slice(0, shown) else hits end, more: hits.len() > shown }
+            return Response.json(Json.of(body).to_text()).with_header("Cache-Control", "no-store")
         end
         let data = SearchData { query: query, hits: hits, has_hits: not hits.is_empty(), count: hits.len(), searched: query.len() >= 2, t: strings_of(locale) }
         let shell = self.shell(req, locale, strings_of(locale).search, release, "")

@@ -50,3 +50,6 @@ a.card { color:inherit; display:block; } a.card:hover { text-decoration:none; bo
 .user-body p { margin:0; } .user-body .who { font-weight:600; color:var(--fg); }
 .user-body a, .user-body button.link { color:var(--muted); text-align:left; } .user-body a:hover, .user-body button.link:hover { color:var(--fg); }
 .user-body form { margin:0; } .user-body button.link { background:none; border:0; padding:0; font:inherit; cursor:pointer; }
+.hero .btn { margin:0 .5rem .6rem 0; }
+.pg-bar .btn, .toolbar .btn, .head .btn, .actions .btn, .pop-body .btn { margin:0; }
+@media (max-width:44rem) { .hero .btn { display:block; margin:0 0 .6rem; text-align:center; } }

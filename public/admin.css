@@ -69,3 +69,8 @@ tr.changes > td { padding-top:0; }
 .md-toolbar { display:flex; flex-wrap:wrap; gap:.2rem; padding:.3rem; border:1px solid var(--line); border-bottom:0; border-radius:.5rem .5rem 0 0; background:var(--card); } .md-toolbar button { min-width:2rem; height:2rem; padding:0 .45rem; border:0; border-radius:.35rem; background:transparent; color:var(--fg); font:inherit; font-size:.85rem; cursor:pointer; } .md-toolbar button:hover { background:var(--code, rgb(127 127 127 / .15)); color:var(--accent); } .md-toolbar .sep { width:1px; margin:.3rem .25rem; background:var(--line); }
 .md-toolbar + textarea.editor { border-radius:0 0 .5rem .5rem; } .md-status { font-size:.78rem; margin-top:.3rem; }
 @media (max-width:44rem) { .admin header.top nav.main { flex-wrap:wrap; overflow:visible; margin:0; gap:0 .5rem; } .admin header.top nav.main a { padding:.45rem .25rem .4rem; font-size:.92rem; } }
+@media (max-width:44rem) {
+  .toolbar { gap:.6rem; } .toolbar > * { flex:1 1 auto; text-align:center; } .toolbar .btn { display:block; }
+  .bulk { gap:.6rem; } .bulk > * { flex:1 1 100%; } .bulk label, .bulk select { width:100%; } .bulk .btn { flex:0 0 auto; }
+  .tabs { margin-bottom:.6rem; } .tabs.sections { margin-bottom:1rem; row-gap:.4rem; }
+}

@@ -1,0 +1,68 @@
+# Production: the site and its database, started by `docker compose -f docker-compose.prod.yml up -d`.
+# Caddy (or any proxy) is outside and talks to 127.0.0.1:8082. Values come from `.env` (see deploy/env.example).
+name: qlang-doc
+
+x-site: &site
+  image: ghcr.io/quenti77/qlang-doc:${DOC_TAG:-latest}
+  restart: unless-stopped
+  environment: &env
+    # the database is on the private network of the compose file: no TLS needed (sslmode=disable says so)
+    DOC_DATABASE_URL: postgres://qlang_doc:${DOC_DB_PASSWORD:?set DOC_DB_PASSWORD}@db:5432/qlang_doc?sslmode=disable
+    DOC_SESSION_SECRET: ${DOC_SESSION_SECRET:?set DOC_SESSION_SECRET (32 characters at least)}
+    DOC_ADMIN_LOGIN: ${DOC_ADMIN_LOGIN:-admin}
+    DOC_ADMIN_PASSWORD: ${DOC_ADMIN_PASSWORD:?set DOC_ADMIN_PASSWORD (12 characters at least)}
+    DOC_BASE_URL: ${DOC_BASE_URL:?set DOC_BASE_URL}
+    DOC_SECURE_COOKIES: "1"
+    DOC_SIGNUP: ${DOC_SIGNUP:-closed}
+    DOC_SUBMISSIONS: ${DOC_SUBMISSIONS:-closed}
+    DOC_HOOK_SECRET: ${DOC_HOOK_SECRET:-}
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: qlang_doc
+      POSTGRES_USER: qlang_doc
+      POSTGRES_PASSWORD: ${DOC_DB_PASSWORD:?set DOC_DB_PASSWORD}
+    volumes:
+      - qlang_doc_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qlang_doc -d qlang_doc -h 127.0.0.1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # the tables, then the first administrator: both are safe to run again, so they run at each start
+  setup:
+    <<: *site
+    restart: "no"
+    command: ["sh", "-c", "qlang run migrate.q && qlang run seed.q"]
+
+  site:
+    <<: *site
+    depends_on:
+      db:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:8082:8082"
+
+  # reads the git repositories of the packages every five minutes (the only part that runs `git`)
+  sync:
+    <<: *site
+    depends_on:
+      db:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    healthcheck:
+      disable: true
+    command: ["sh", "-c", "while true; do qlang run --allow-process tools/sync-packages.q; sleep 300; done"]
+
+volumes:
+  qlang_doc_data:

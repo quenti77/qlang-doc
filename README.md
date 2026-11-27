@@ -60,6 +60,19 @@ qlang run --allow-process tools/sync-packages.q                 # read the git r
 
 `sync-packages.q` is the only part that runs `git`, so that the web server never does. Run it every few minutes.
 
+## Deploy
+
+The image `ghcr.io/quenti77/qlang-doc` (amd64 and arm64) is built by `.github/workflows/image.yml` at each push to `main` (`latest`, `sha-…`) and each `v*` tag. `docker-compose.prod.yml` runs it with Postgres:
+
+| Service | Role |
+|---|---|
+| `db` | Postgres 17, on the private network only, data in a volume |
+| `setup` | `migrate.q` then `seed.q`, at each start (safe to run again) |
+| `site` | the web server, published on `127.0.0.1:8082` only |
+| `sync` | reads the git repositories of the packages every five minutes |
+
+A reverse proxy outside the compose file (Caddy) takes the public ports and the HTTPS certificate. The steps are in [deploy/README.md](deploy/README.md).
+
 ## Checks
 
 ```sh

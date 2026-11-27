@@ -1,0 +1,7 @@
+.git
+.github
+.qlang
+.env
+deploy
+docker-compose*.yml
+Makefile
